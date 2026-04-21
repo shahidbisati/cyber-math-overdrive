@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber-Math Overdrive (Ultimate Store Edition)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber-Math Overdrive (Universal Store Edition)</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -17,6 +17,7 @@
             font-family: 'Share Tech Mono', monospace; background-color: var(--dark-bg);
             margin: 0; display: flex; justify-content: center; align-items: center;
             min-height: 100vh; color: var(--neon-cyan); overflow: hidden; perspective: 1000px;
+            touch-action: none; /* Prevents native screen scrolling on mobile */
         }
 
         .cyber-grid {
@@ -29,41 +30,44 @@
 
         @keyframes gridMove { 0% { transform: rotateX(60deg) translateY(0); } 100% { transform: rotateX(60deg) translateY(50px); } }
 
+        /* Responsive Container */
         #hud-container {
-            width: 550px; background: rgba(5, 5, 16, 0.85); border: 2px solid var(--neon-cyan);
-            border-radius: 10px; padding: 20px 30px; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.1);
+            width: 95%; max-width: 550px; box-sizing: border-box;
+            background: rgba(5, 5, 16, 0.85); border: 2px solid var(--neon-cyan);
+            border-radius: 10px; padding: 15px 20px; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.1);
             position: relative; backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.5s;
         }
 
         .header-system { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(0, 243, 255, 0.3); padding-bottom: 10px; }
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 20px; margin: 0; text-transform: uppercase; text-shadow: 0 0 10px var(--neon-cyan); }
-        .stat-box { font-size: 14px; }
-        #timer { color: var(--neon-pink); font-size: 28px; font-weight: bold; text-shadow: 0 0 10px var(--neon-pink); transition: 0.1s; }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 18px; margin: 0; text-transform: uppercase; text-shadow: 0 0 10px var(--neon-cyan); }
+        .stat-box { font-size: 12px; }
+        #timer { color: var(--neon-pink); font-size: 24px; font-weight: bold; text-shadow: 0 0 10px var(--neon-pink); transition: 0.1s; }
         
-        .currency-bar { display: flex; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #444; }
-        .data-cores { color: #f1c40f; font-weight: bold; font-size: 16px; text-shadow: 0 0 10px #f1c40f; }
-        .combo-meter { color: var(--neon-pink); font-weight: bold; font-size: 16px; text-shadow: 0 0 10px var(--neon-pink); }
+        .currency-bar { display: flex; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 8px 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #444; }
+        .data-cores { color: #f1c40f; font-weight: bold; font-size: 14px; text-shadow: 0 0 10px #f1c40f; }
+        .combo-meter { color: var(--neon-pink); font-weight: bold; font-size: 14px; text-shadow: 0 0 10px var(--neon-pink); }
 
-        .target-display { text-align: center; margin: 15px 0; }
-        #target-num { font-family: 'Orbitron', sans-serif; font-size: 70px; font-weight: 900; color: transparent; -webkit-text-stroke: 2px var(--neon-cyan); text-shadow: 0 0 30px rgba(0, 243, 255, 0.5); display: block; line-height: 1; }
+        .target-display { text-align: center; margin: 10px 0; }
+        #target-num { font-family: 'Orbitron', sans-serif; font-size: 60px; font-weight: 900; color: transparent; -webkit-text-stroke: 2px var(--neon-cyan); text-shadow: 0 0 30px rgba(0, 243, 255, 0.5); display: block; line-height: 1; }
         
-        .drop-zone { min-height: 90px; border: 1px solid rgba(0, 243, 255, 0.3); background: rgba(0, 243, 255, 0.02); margin: 5px 0 15px 0; padding: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; transition: all 0.2s; }
+        .drop-zone { min-height: 80px; border: 1px solid rgba(0, 243, 255, 0.3); background: rgba(0, 243, 255, 0.02); margin: 5px 0 10px 0; padding: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; transition: all 0.2s; }
         .drop-zone.active { border-color: var(--neon-pink); background: rgba(255, 0, 127, 0.1); }
 
         .block {
-            width: 60px; height: 60px; background: var(--block-bg); border: 2px solid var(--block-border); color: var(--block-border);
-            font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: grab; text-shadow: 0 0 5px var(--block-border); transition: 0.2s;
+            width: 55px; height: 55px; background: var(--block-bg); border: 2px solid var(--block-border); color: var(--block-border);
+            font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: bold; display: flex; justify-content: center; align-items: center; 
+            cursor: grab; text-shadow: 0 0 5px var(--block-border); transition: transform 0.1s;
+            user-select: none; -webkit-user-select: none; touch-action: none;
+            border-radius: 8px;
         }
-        .block:hover { background: var(--block-border); color: black; box-shadow: 0 0 20px var(--block-border); }
-        .block:active { transform: scale(0.9); }
         
-        /* The Spellbreaker Effect */
+        .block.dragging { opacity: 0.8; z-index: 2000; cursor: grabbing; box-shadow: 0 0 20px var(--block-border); transform: scale(1.1); pointer-events: none; }
         .spell-broken { opacity: 0.4; border-style: dashed; filter: grayscale(100%); }
 
-        .action-btn { background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan); padding: 8px 15px; font-family: 'Share Tech Mono', monospace; font-size: 14px; cursor: pointer; text-transform: uppercase; width: 48%; transition: 0.3s; }
+        .btn-row { display: flex; justify-content: space-between; margin-bottom: 5px; gap: 10px; }
+        .action-btn { background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan); padding: 8px 10px; font-family: 'Share Tech Mono', monospace; font-size: 14px; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.3s; }
         .action-btn:hover:not(:disabled) { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
         .action-btn:disabled { border-color: #444; color: #444; cursor: not-allowed; }
-        .btn-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
 
         @keyframes glitch { 0% { transform: translate(0); } 20% { transform: translate(-5px, 5px); filter: hue-rotate(90deg) invert(1); } 40% { transform: translate(5px, -5px); } 60% { transform: translate(-2px, 2px); filter: hue-rotate(180deg) invert(1); } 100% { transform: translate(0); } }
         .glitch-effect { animation: glitch 0.3s ease-in-out; }
@@ -71,29 +75,28 @@
         @keyframes heartbeat { 0% { transform: scale(1); color: var(--neon-pink); } 50% { transform: scale(1.2); color: red; text-shadow: 0 0 20px red; } 100% { transform: scale(1); color: var(--neon-pink); } }
         .danger-time { animation: heartbeat 0.5s infinite; }
 
-        #system-msg { text-align: center; font-size: 18px; height: 25px; text-transform: uppercase; font-weight: bold; margin-top: 10px; }
+        #system-msg { text-align: center; font-size: 14px; height: 20px; text-transform: uppercase; font-weight: bold; margin-top: 5px; }
         
         /* Modals & Overlays */
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 16, 0.95); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        #init-btn { background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan); padding: 20px 40px; font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        #init-btn { background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan); padding: 15px 30px; font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
         #init-btn:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 30px var(--neon-cyan); }
 
         #ad-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 16, 0.95); backdrop-filter: blur(10px); z-index: 50; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; box-sizing: border-box; }
-        .ad-btn { background: transparent; color: var(--neon-green); border: 2px solid var(--neon-green); padding: 15px 30px; font-family: 'Share Tech Mono', monospace; font-size: 18px; cursor: pointer; text-transform: uppercase; margin-bottom: 15px; transition: 0.3s; }
+        .ad-btn { background: transparent; color: var(--neon-green); border: 2px solid var(--neon-green); padding: 15px 20px; font-family: 'Share Tech Mono', monospace; font-size: 16px; cursor: pointer; text-transform: uppercase; margin-bottom: 15px; transition: 0.3s; }
         .ad-btn:hover { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
         #ad-progress-container { display: none; width: 80%; height: 10px; border: 1px solid var(--neon-cyan); margin-top: 20px;}
         #ad-progress-fill { width: 0%; height: 100%; background: var(--neon-cyan); }
 
-        #store-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 16, 0.95); z-index: 60; display: none; flex-direction: column; align-items: center; padding: 30px; box-sizing: border-box; overflow-y: auto; }
-        .store-item { border: 1px solid #444; padding: 15px; width: 90%; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); }
-        .buy-btn { background: #f1c40f; color: black; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Share Tech Mono'; font-weight: bold; transition: 0.2s; }
+        #store-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 16, 0.95); z-index: 60; display: none; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .store-item { border: 1px solid #444; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); }
+        .buy-btn { background: #f1c40f; color: black; border: none; padding: 8px 12px; cursor: pointer; font-family: 'Share Tech Mono'; font-weight: bold; transition: 0.2s; font-size: 12px;}
         .buy-btn:hover:not(:disabled) { box-shadow: 0 0 15px #f1c40f; transform: scale(1.05); }
         .buy-btn:disabled { background: #333; color: #888; cursor: not-allowed; box-shadow: none; }
         
-        /* Scrollbar for store */
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #050510; }
-        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -101,7 +104,7 @@
 <div class="cyber-grid"></div>
 
 <div id="start-screen">
-    <h1 style="font-size: 40px; margin-bottom: 30px; text-shadow: 0 0 20px var(--neon-cyan);">Cyber-Math Overdrive</h1>
+    <h1 style="font-size: 30px; margin-bottom: 20px; text-shadow: 0 0 20px var(--neon-cyan); text-align:center;">Cyber-Math<br>Overdrive</h1>
     <button id="init-btn" onclick="initializeGame()">System Boot</button>
 </div>
 
@@ -124,72 +127,72 @@
     </div>
 
     <div class="target-display">
-        <span style="font-size: 12px; color: #888;">Override Code Required</span>
+        <span style="font-size: 10px; color: #888;">Override Code Required</span>
         <span id="target-num">0</span>
     </div>
 
-    <div id="drop-zone" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)"></div>
-    <div id="pool-zone" class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)"></div>
+    <div id="drop-zone" class="drop-zone"></div>
+    <div id="pool-zone" class="drop-zone"></div>
 
     <div id="system-msg"></div>
 
     <div id="ad-overlay">
-        <h2 style="color: var(--neon-pink); font-family: 'Orbitron';">SYSTEM FAILURE</h2>
-        <p style="margin-bottom: 30px;">Your <b>x<span id="lost-combo"></span> Combo</b> is at risk! Watch a sponsor feed to restore power.</p>
+        <h2 style="color: var(--neon-pink); font-family: 'Orbitron'; font-size:22px;">SYSTEM FAILURE</h2>
+        <p style="margin-bottom: 30px; font-size:14px;">Your <b>x<span id="lost-combo"></span> Combo</b> is at risk! Watch a sponsor feed to restore power.</p>
         <button class="ad-btn" id="watch-ad-btn" onclick="triggerAdNetwork()">► WATCH AD TO RETRY</button>
-        <button style="background:transparent; border:none; color:#888; cursor:pointer; text-transform:uppercase; margin-top:15px;" onclick="executeGameLoss()">Abort (Lose Combo)</button>
+        <button style="background:transparent; border:none; color:#888; cursor:pointer; text-transform:uppercase; margin-top:15px; font-size:12px;" onclick="executeGameLoss()">Abort (Lose Combo)</button>
         <div id="ad-progress-container"><div id="ad-progress-fill"></div></div>
     </div>
 
     <div id="store-overlay">
-        <h2 style="color: #f1c40f; font-family: 'Orbitron'; margin-bottom: 10px; margin-top: 0;">DATA CORE BLACK MARKET</h2>
-        <p style="color: #888; margin-bottom: 20px;">Available Balance: <span id="store-core-balance" style="color:#f1c40f; font-weight:bold;">0</span></p>
+        <h2 style="color: #f1c40f; font-family: 'Orbitron'; margin-bottom: 5px; margin-top: 0; font-size: 18px;">BLACK MARKET</h2>
+        <p style="color: #888; margin-bottom: 15px; font-size: 12px;">Available Balance: <span id="store-core-balance" style="color:#f1c40f; font-weight:bold;">0</span></p>
 
-        <h3 style="color: var(--neon-cyan); width: 90%; text-align: left; margin: 10px 0;">[ COSMETIC OVERRIDES ]</h3>
+        <h3 style="color: var(--neon-cyan); width: 100%; text-align: left; margin: 5px 0; font-size:14px;">[ OVERRIDES ]</h3>
         
         <div class="store-item">
             <div>
-                <strong style="color: #ff007f;">Neon Plasma Theme</strong><br>
-                <span style="font-size: 12px; color: #888;">Visual Block Upgrade</span>
+                <strong style="color: #ff007f; font-size:14px;">Neon Plasma</strong><br>
+                <span style="font-size: 10px; color: #888;">Visual Block Upgrade</span>
             </div>
             <button class="buy-btn" id="buy-theme-1" onclick="purchaseTheme('neon-pink', 500)">500 Cores</button>
         </div>
         
         <div class="store-item">
             <div>
-                <strong style="color: #39ff14;">Toxic Waste Theme</strong><br>
-                <span style="font-size: 12px; color: #888;">Visual Block Upgrade</span>
+                <strong style="color: #39ff14; font-size:14px;">Toxic Waste</strong><br>
+                <span style="font-size: 10px; color: #888;">Visual Block Upgrade</span>
             </div>
             <button class="buy-btn" id="buy-theme-2" onclick="purchaseTheme('neon-green', 1000)">1000 Cores</button>
         </div>
 
         <div class="store-item">
             <div>
-                <strong style="color: #a0a5a9;">Reactive Zinc Plating</strong><br>
-                <span style="font-size: 12px; color: #888;">Visual Block Upgrade</span>
+                <strong style="color: #a0a5a9; font-size:14px;">Reactive Zinc</strong><br>
+                <span style="font-size: 10px; color: #888;">Visual Block Upgrade</span>
             </div>
             <button class="buy-btn" id="buy-theme-3" onclick="purchaseTheme('reactive-zinc', 1500)">1500 Cores</button>
         </div>
 
-        <h3 style="color: var(--neon-cyan); width: 90%; text-align: left; margin: 20px 0 10px 0;">[ PERMANENT UPGRADES ]</h3>
+        <h3 style="color: var(--neon-cyan); width: 100%; text-align: left; margin: 15px 0 5px 0; font-size:14px;">[ PERMANENT UPGRADES ]</h3>
 
         <div class="store-item">
             <div>
-                <strong style="color: #00f3ff;">Quantum Time Dilator</strong><br>
-                <span style="font-size: 12px; color: #888;">Injects +3.0 seconds into every node clock.</span>
+                <strong style="color: #00f3ff; font-size:14px;">Time Dilator</strong><br>
+                <span style="font-size: 10px; color: #888;">+3.0s to every node.</span>
             </div>
             <button class="buy-btn" id="buy-upg-time" onclick="purchaseUpgrade('timeDilator', 3000)">3000 Cores</button>
         </div>
 
         <div class="store-item">
             <div>
-                <strong style="color: #ff007f;">"Spellbreaker" Protocol</strong><br>
-                <span style="font-size: 12px; color: #888;">Automatically exposes and weakens one decoy block.</span>
+                <strong style="color: #ff007f; font-size:14px;">Spellbreaker</strong><br>
+                <span style="font-size: 10px; color: #888;">Exposes one decoy block.</span>
             </div>
             <button class="buy-btn" id="buy-upg-spell" onclick="purchaseUpgrade('spellbreaker', 5000)">5000 Cores</button>
         </div>
 
-        <button class="action-btn" onclick="closeStore()" style="margin-top: 30px; width: 90%;">[ CLOSE STORE ]</button>
+        <button class="action-btn" onclick="closeStore()" style="margin-top: 20px; width: 100%;">[ CLOSE STORE ]</button>
     </div>
 </div>
 
@@ -217,6 +220,86 @@
         combo: 1, cores: 0, unlockedThemes: [],
         upgrades: { timeDilator: false, spellbreaker: false }
     };
+
+    // --- UNIVERSAL POINTER INPUT ENGINE ---
+    let draggedBlock = null;
+    let offsetX = 0, offsetY = 0;
+
+    function handlePointerDown(e) {
+        if (!sys.active) return;
+        const target = e.target.closest('.block');
+        if (!target) return;
+
+        draggedBlock = target;
+        
+        // Normalize touch vs mouse coordinates
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const rect = draggedBlock.getBoundingClientRect();
+        offsetX = clientX - rect.left;
+        offsetY = clientY - rect.top;
+
+        // Take it out of flow
+        draggedBlock.style.position = 'fixed';
+        draggedBlock.style.width = rect.width + 'px';
+        draggedBlock.style.height = rect.height + 'px';
+        draggedBlock.style.left = rect.left + 'px';
+        draggedBlock.style.top = rect.top + 'px';
+        
+        draggedBlock.classList.add('dragging');
+        playSound('drag');
+    }
+
+    function handlePointerMove(e) {
+        if (!draggedBlock) return;
+        e.preventDefault(); // Prevents mobile screen scrolling
+
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        draggedBlock.style.left = (clientX - offsetX) + 'px';
+        draggedBlock.style.top = (clientY - offsetY) + 'px';
+    }
+
+    function handlePointerUp(e) {
+        if (!draggedBlock) return;
+
+        const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+        const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+
+        // Hide element temporarily to find what is directly beneath the cursor
+        draggedBlock.style.display = 'none';
+        const elemBelow = document.elementFromPoint(clientX, clientY);
+        draggedBlock.style.display = '';
+
+        const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
+
+        // Reset styling
+        draggedBlock.classList.remove('dragging');
+        draggedBlock.style.position = '';
+        draggedBlock.style.width = '';
+        draggedBlock.style.height = '';
+        draggedBlock.style.left = '';
+        draggedBlock.style.top = '';
+
+        if (dropZone) {
+            playSound('drop');
+            dropZone.appendChild(draggedBlock);
+            validateInput();
+        }
+
+        draggedBlock = null;
+    }
+
+    // Attach listeners globally
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('mousemove', handlePointerMove, { passive: false });
+    document.addEventListener('mouseup', handlePointerUp);
+    document.addEventListener('touchstart', handlePointerDown, { passive: false });
+    document.addEventListener('touchmove', handlePointerMove, { passive: false });
+    document.addEventListener('touchend', handlePointerUp);
+
 
     function initializeGame() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -265,8 +348,7 @@
 
         blocks.forEach((bData, i) => {
             const b = document.createElement('div'); b.className = 'block'; b.innerText = bData.val; b.id = 'blk-' + i;
-            b.draggable = true; b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
-            b.ondragstart = (e) => { playSound('drag'); e.dataTransfer.setData('text', e.target.id); };
+            b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
             document.getElementById('pool-zone').appendChild(b);
         });
 
@@ -323,16 +405,6 @@
             playSound('emp'); sys.empAvailable = false; document.getElementById('emp-btn').disabled = true;
             const targetBlock = targetList[0]; targetBlock.style.transform = 'scale(0)'; setTimeout(() => targetBlock.remove(), 200);
         } else { document.getElementById('system-msg').innerText = "NO DECOYS DETECTED"; }
-    }
-
-    // --- DRAG / DROP CORE ---
-    function allowDrop(e) { e.preventDefault(); }
-    function dragEnter(e) { if(e.target.classList.contains('drop-zone')) e.target.classList.add('active'); }
-    function dragLeave(e) { e.target.classList.remove('active'); }
-    function drop(e) {
-        e.preventDefault(); if(!sys.active) return;
-        const id = e.dataTransfer.getData('text'); const zone = e.target.closest('.drop-zone');
-        if(zone) { playSound('drop'); zone.classList.remove('active'); zone.appendChild(document.getElementById(id)); validateInput(); }
     }
 
     function validateInput() {
