@@ -221,7 +221,7 @@
         upgrades: { timeDilator: false, spellbreaker: false }
     };
 
-    // --- UNIVERSAL POINTER INPUT ENGINE ---
+         // --- UNIVERSAL POINTER INPUT ENGINE (PATCHED) ---
     let draggedBlock = null;
     let offsetX = 0, offsetY = 0;
 
@@ -240,12 +240,27 @@
         offsetX = clientX - rect.left;
         offsetY = clientY - rect.top;
 
-        // Take it out of flow
+        // --- THE FIX: DOM Elevation ---
+        // 1. Save where it came from so we can return it if dropped outside
+        draggedBlock.dataset.originalParent = draggedBlock.parentElement.id;
+        
+        // 2. Create an invisible placeholder so the zone doesn't shrink visually
+        const placeholder = document.createElement('div');
+        placeholder.className = 'block';
+        placeholder.id = 'drag-placeholder';
+        placeholder.style.visibility = 'hidden';
+        draggedBlock.parentElement.insertBefore(placeholder, draggedBlock);
+
+        // 3. Move the block directly to the <body> so 'position: fixed' escapes the HUD
+        document.body.appendChild(draggedBlock);
+
         draggedBlock.style.position = 'fixed';
+        draggedBlock.style.margin = '0';
         draggedBlock.style.width = rect.width + 'px';
         draggedBlock.style.height = rect.height + 'px';
         draggedBlock.style.left = rect.left + 'px';
         draggedBlock.style.top = rect.top + 'px';
+        draggedBlock.style.zIndex = '9999'; // Ensure it floats above everything
         
         draggedBlock.classList.add('dragging');
         playSound('drag');
@@ -253,7 +268,7 @@
 
     function handlePointerMove(e) {
         if (!draggedBlock) return;
-        e.preventDefault(); // Prevents mobile screen scrolling
+        e.preventDefault(); // Prevents mobile screen scrolling ONLY while dragging
 
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -268,25 +283,35 @@
         const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
         const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
 
-        // Hide element temporarily to find what is directly beneath the cursor
+        // Hide element temporarily to find what drop-zone is directly beneath the cursor
         draggedBlock.style.display = 'none';
         const elemBelow = document.elementFromPoint(clientX, clientY);
         draggedBlock.style.display = '';
 
         const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
 
-        // Reset styling
+        // Cleanup all dragging styles
         draggedBlock.classList.remove('dragging');
         draggedBlock.style.position = '';
         draggedBlock.style.width = '';
         draggedBlock.style.height = '';
         draggedBlock.style.left = '';
         draggedBlock.style.top = '';
+        draggedBlock.style.zIndex = '';
+        draggedBlock.style.margin = '';
+
+        // Remove the invisible placeholder
+        const placeholder = document.getElementById('drag-placeholder');
+        if (placeholder) placeholder.remove();
 
         if (dropZone) {
             playSound('drop');
             dropZone.appendChild(draggedBlock);
             validateInput();
+        } else {
+            // Return to its original zone if dropped in the void
+            const originalZone = document.getElementById(draggedBlock.dataset.originalParent);
+            if (originalZone) originalZone.appendChild(draggedBlock);
         }
 
         draggedBlock = null;
@@ -299,6 +324,7 @@
     document.addEventListener('touchstart', handlePointerDown, { passive: false });
     document.addEventListener('touchmove', handlePointerMove, { passive: false });
     document.addEventListener('touchend', handlePointerUp);
+
 
 
     function initializeGame() {
