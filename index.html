@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cyber-Math Overdrive (Universal Store Edition)</title>
+    <title>Cyber-Math Overdrive (Master Edition)</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -61,7 +61,7 @@
             border-radius: 8px;
         }
         
-        .block.dragging { opacity: 0.8; z-index: 2000; cursor: grabbing; box-shadow: 0 0 20px var(--block-border); transform: scale(1.1); pointer-events: none; }
+        .block.dragging { opacity: 0.8; z-index: 9999; cursor: grabbing; box-shadow: 0 0 20px var(--block-border); transform: scale(1.1); pointer-events: none; }
         .spell-broken { opacity: 0.4; border-style: dashed; filter: grayscale(100%); }
 
         .btn-row { display: flex; justify-content: space-between; margin-bottom: 5px; gap: 10px; }
@@ -221,14 +221,21 @@
         upgrades: { timeDilator: false, spellbreaker: false }
     };
 
-         // --- UNIVERSAL POINTER INPUT ENGINE (PATCHED) ---
+    // --- UNIVERSAL POINTER INPUT ENGINE ---
     let draggedBlock = null;
     let offsetX = 0, offsetY = 0;
 
     function handlePointerDown(e) {
         if (!sys.active) return;
+        
+        // INPUT LOCK: Prevent multiple concurrent drags from rapid clicking
+        if (draggedBlock) return;
+
         const target = e.target.closest('.block');
         if (!target) return;
+
+        // Prevent rapid-clicking from triggering native browser text-highlighting/dragging
+        if (e.cancelable && e.type !== 'touchstart') e.preventDefault(); 
 
         draggedBlock = target;
         
@@ -240,18 +247,17 @@
         offsetX = clientX - rect.left;
         offsetY = clientY - rect.top;
 
-        // --- THE FIX: DOM Elevation ---
-        // 1. Save where it came from so we can return it if dropped outside
+        // DOM ELEVATION: Save original parent in case of invalid drop
         draggedBlock.dataset.originalParent = draggedBlock.parentElement.id;
         
-        // 2. Create an invisible placeholder so the zone doesn't shrink visually
+        // Create invisible placeholder to prevent layout collapse
         const placeholder = document.createElement('div');
         placeholder.className = 'block';
         placeholder.id = 'drag-placeholder';
         placeholder.style.visibility = 'hidden';
         draggedBlock.parentElement.insertBefore(placeholder, draggedBlock);
 
-        // 3. Move the block directly to the <body> so 'position: fixed' escapes the HUD
+        // Append to body to bypass CSS containing blocks
         document.body.appendChild(draggedBlock);
 
         draggedBlock.style.position = 'fixed';
@@ -260,7 +266,7 @@
         draggedBlock.style.height = rect.height + 'px';
         draggedBlock.style.left = rect.left + 'px';
         draggedBlock.style.top = rect.top + 'px';
-        draggedBlock.style.zIndex = '9999'; // Ensure it floats above everything
+        draggedBlock.style.zIndex = '9999'; 
         
         draggedBlock.classList.add('dragging');
         playSound('drag');
@@ -268,7 +274,7 @@
 
     function handlePointerMove(e) {
         if (!draggedBlock) return;
-        e.preventDefault(); // Prevents mobile screen scrolling ONLY while dragging
+        e.preventDefault(); // Prevents mobile screen scrolling
 
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -290,7 +296,7 @@
 
         const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
 
-        // Cleanup all dragging styles
+        // Reset styling
         draggedBlock.classList.remove('dragging');
         draggedBlock.style.position = '';
         draggedBlock.style.width = '';
@@ -317,14 +323,14 @@
         draggedBlock = null;
     }
 
-    // Attach listeners globally
+    // Attach listeners globally (including touchcancel safeguard)
     document.addEventListener('mousedown', handlePointerDown);
     document.addEventListener('mousemove', handlePointerMove, { passive: false });
     document.addEventListener('mouseup', handlePointerUp);
     document.addEventListener('touchstart', handlePointerDown, { passive: false });
     document.addEventListener('touchmove', handlePointerMove, { passive: false });
     document.addEventListener('touchend', handlePointerUp);
-
+    document.addEventListener('touchcancel', handlePointerUp);
 
 
     function initializeGame() {
@@ -356,7 +362,16 @@
         document.getElementById('emp-btn').disabled = false;
         document.getElementById('system-msg').innerText = "AWAITING INPUT...";
         document.getElementById('system-msg').style.color = "var(--neon-cyan)";
-        document.getElementById('drop-zone').innerHTML = ''; document.getElementById('pool-zone').innerHTML = '';
+        
+        // Clear standard zones
+        document.getElementById('drop-zone').innerHTML = ''; 
+        document.getElementById('pool-zone').innerHTML = '';
+        
+        // GARBAGE SWEEPER: Destroy any blocks/placeholders stuck in the body from a chaotic previous round
+        document.querySelectorAll('body > .block').forEach(ghost => ghost.remove());
+        document.querySelectorAll('#drag-placeholder').forEach(p => p.remove());
+        draggedBlock = null; 
+
         document.getElementById('level-txt').innerText = sys.level;
         document.getElementById('combo-txt').innerText = sys.combo;
         
@@ -556,9 +571,8 @@
             root.style.setProperty('--block-bg', 'rgba(0, 0, 0, 0.8)');
         } else if (themeName === 'reactive-zinc') {
             root.style.setProperty('--block-border', '#a0a5a9');
-            root.style.setProperty('--block-bg', 'rgba(57, 255, 20, 0.15)'); // Acidic glow
+            root.style.setProperty('--block-bg', 'rgba(57, 255, 20, 0.15)'); 
         } else {
-            // Default
             root.style.setProperty('--block-border', 'var(--neon-cyan)');
             root.style.setProperty('--block-bg', 'rgba(0, 0, 0, 0.8)');
         }
@@ -580,7 +594,6 @@
     }
 
     function updateStoreUI() {
-        // Theme UI
         const themes = [
             { id: 'neon-pink', btn: 'buy-theme-1' },
             { id: 'neon-green', btn: 'buy-theme-2' },
@@ -596,7 +609,6 @@
             }
         });
 
-        // Upgrade UI
         if(sys.upgrades.timeDilator) {
             const btn = document.getElementById('buy-upg-time');
             btn.innerText = "ACQUIRED"; btn.disabled = true;
