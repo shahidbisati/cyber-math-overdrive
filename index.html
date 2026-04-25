@@ -229,25 +229,30 @@
 
     // --- SESSION MANAGERS ---
     async function startNewSession() {
-        document.getElementById('auth-msg').innerText = "CONNECTING...";
+        const msgBox = document.getElementById('auth-msg');
+        if(msgBox) msgBox.innerText = "CONNECTING...";
         const connected = await window.cloudConnect();
-        if(!connected) { document.getElementById('auth-msg').innerText = "DATABASE FAILED TO CONNECT."; return; }
+        if(!connected) { if(msgBox) msgBox.innerText = "DATABASE FAILED TO CONNECT."; return; }
         
         currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
-        document.getElementById('auth-msg').innerText = "GENERATING ID...";
+        if(msgBox) msgBox.innerText = "GENERATING ID...";
         await window.cloudSave();
         startGameUI();
     }
 
     async function loadHackerId() {
-        const input = document.getElementById('hacker-id-input').value.trim().toUpperCase();
+        const inputEl = document.getElementById('hacker-id-input');
+        if(!inputEl) return;
+        const input = inputEl.value.trim().toUpperCase();
         if(input.length < 5) return;
         
-        document.getElementById('auth-msg').innerText = "CONNECTING...";
+        const msgBox = document.getElementById('auth-msg');
+        if(msgBox) msgBox.innerText = "CONNECTING...";
+        
         const connected = await window.cloudConnect();
-        if(!connected) { document.getElementById('auth-msg').innerText = "DATABASE FAILED TO CONNECT."; return; }
+        if(!connected) { if(msgBox) msgBox.innerText = "DATABASE FAILED TO CONNECT."; return; }
 
-        document.getElementById('auth-msg').innerText = "SEARCHING...";
+        if(msgBox) msgBox.innerText = "SEARCHING...";
         const data = await window.cloudLoad(input);
         if(data) {
             sys.topScore = data.topScore || 0; sys.cores = data.cores || 0;
@@ -256,7 +261,7 @@
             currentHackerId = input;
             startGameUI();
         } else {
-            document.getElementById('auth-msg').innerText = "HACKER ID NOT FOUND";
+            if(msgBox) msgBox.innerText = "HACKER ID NOT FOUND";
         }
     }
 
@@ -273,15 +278,26 @@
 
     function startGameUI() {
         try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('hud-container').style.opacity = '1';
+        
+        // DEFENSIVE PROGRAMMING: These 'if' statements guarantee the script won't crash if HTML is missing
+        const startScreen = document.getElementById('start-screen');
+        if(startScreen) startScreen.style.display = 'none';
+        
+        const hudContainer = document.getElementById('hud-container');
+        if(hudContainer) hudContainer.style.opacity = '1';
         
         const idDisplay = document.getElementById('display-hacker-id');
         if(idDisplay) idDisplay.innerText = currentHackerId;
         
-        document.getElementById('top-score-txt').innerText = sys.topScore;
-        document.getElementById('score-txt').innerText = sys.score;
-        document.getElementById('core-txt').innerText = sys.cores;
+        const topScoreTxt = document.getElementById('top-score-txt');
+        if(topScoreTxt) topScoreTxt.innerText = sys.topScore;
+        
+        const scoreTxt = document.getElementById('score-txt');
+        if(scoreTxt) scoreTxt.innerText = sys.score;
+        
+        const coreTxt = document.getElementById('core-txt');
+        if(coreTxt) coreTxt.innerText = sys.cores;
+        
         updateStoreUI(); playSound('win'); initProtocol();
     }
 
@@ -344,13 +360,18 @@
 
     function initProtocol() {
         sys.active = true; sys.empAvailable = true; sys.startTime = Date.now();
-        document.getElementById('system-msg').innerText = "AWAITING INPUT...";
-        document.getElementById('system-msg').style.color = "var(--neon-cyan)";
+        
+        const sysMsg = document.getElementById('system-msg');
+        if(sysMsg) { sysMsg.innerText = "AWAITING INPUT..."; sysMsg.style.color = "var(--neon-cyan)"; }
         
         const empBtn = document.getElementById('emp-btn');
-        empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)";
+        if(empBtn) { empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)"; }
         
-        document.getElementById('drop-zone').innerHTML = ''; document.getElementById('pool-zone').innerHTML = '';
+        const dropZone = document.getElementById('drop-zone');
+        if(dropZone) dropZone.innerHTML = ''; 
+        
+        const poolZone = document.getElementById('pool-zone');
+        if(poolZone) poolZone.innerHTML = '';
         
         const blocks = document.querySelectorAll('body > .block');
         for (let i = 0; i < blocks.length; i++) { blocks[i].remove(); }
@@ -358,31 +379,44 @@
         for (let i = 0; i < placeholders.length; i++) { placeholders[i].remove(); }
         draggedBlock = null; 
 
-        document.getElementById('level-txt').innerText = sys.level; document.getElementById('combo-txt').innerText = sys.combo;
-        document.getElementById('timer').classList.remove('danger-time'); clearInterval(heartbeatInterval); heartbeatInterval = null;
+        const levelTxt = document.getElementById('level-txt');
+        if(levelTxt) levelTxt.innerText = sys.level; 
+        
+        const comboTxt = document.getElementById('combo-txt');
+        if(comboTxt) comboTxt.innerText = sys.combo;
+        
+        const timerUI = document.getElementById('timer');
+        if(timerUI) timerUI.classList.remove('danger-time'); 
+        
+        clearInterval(heartbeatInterval); heartbeatInterval = null;
 
         const blockCount = Math.min(2 + Math.floor(sys.level / 3), 5); const maxVal = 10 + (sys.level * 2);
         let sum = 0; let newBlocks = [];
         for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; newBlocks.push({val: val, isDecoy: false}); }
-        sys.target = sum; document.getElementById('target-num').innerText = sum;
+        sys.target = sum; 
+        
+        const targetNum = document.getElementById('target-num');
+        if(targetNum) targetNum.innerText = sum;
         
         const decoyCount = sys.upgrades.decoyDeflector ? 2 : 3;
         for(let i=0; i<decoyCount; i++) { newBlocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); }
         newBlocks.sort(() => Math.random() - 0.5);
 
-        for (let i = 0; i < newBlocks.length; i++) {
-            const bData = newBlocks[i];
-            const b = document.createElement('div'); b.className = 'block'; b.innerText = bData.val; b.id = 'blk-' + i;
-            b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
-            document.getElementById('pool-zone').appendChild(b);
-        }
+        if(poolZone) {
+            for (let i = 0; i < newBlocks.length; i++) {
+                const bData = newBlocks[i];
+                const b = document.createElement('div'); b.className = 'block'; b.innerText = bData.val; b.id = 'blk-' + i;
+                b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
+                poolZone.appendChild(b);
+            }
 
-        if(sys.upgrades.spellbreaker) {
-            const poolBlocks = document.getElementById('pool-zone').getElementsByClassName('block');
-            for (let i = 0; i < poolBlocks.length; i++) {
-                if (poolBlocks[i].dataset.decoy === "true") {
-                    poolBlocks[i].classList.add('spell-broken');
-                    break;
+            if(sys.upgrades.spellbreaker) {
+                const poolBlocks = poolZone.getElementsByClassName('block');
+                for (let i = 0; i < poolBlocks.length; i++) {
+                    if (poolBlocks[i].dataset.decoy === "true") {
+                        poolBlocks[i].classList.add('spell-broken');
+                        break;
+                    }
                 }
             }
         }
@@ -397,19 +431,29 @@
             sys.time = calculatedTime;
         }
         sys.timerInterval = setInterval(() => {
-            sys.time -= 0.1; document.getElementById('timer').innerText = sys.time.toFixed(1);
-            if(sys.time <= 5.0 && !document.getElementById('timer').classList.contains('danger-time')) {
-                document.getElementById('timer').classList.add('danger-time');
-                if(!heartbeatInterval) heartbeatInterval = setInterval(() => playSound('heartbeat'), 500);
+            sys.time -= 0.1; 
+            const timerUI = document.getElementById('timer');
+            if(timerUI) {
+                timerUI.innerText = sys.time.toFixed(1);
+                if(sys.time <= 5.0 && !timerUI.classList.contains('danger-time')) {
+                    timerUI.classList.add('danger-time');
+                    if(!heartbeatInterval) heartbeatInterval = setInterval(() => playSound('heartbeat'), 500);
+                }
+                if(sys.time <= 0) { timerUI.innerText = "0.0"; offerAdRescue(); }
+            } else if (sys.time <= 0) {
+                offerAdRescue(); // Fallback if UI is missing
             }
-            if(sys.time <= 0) { document.getElementById('timer').innerText = "0.0"; offerAdRescue(); }
         }, 100);
     }
 
     function triggerEMP() {
         if(!sys.active) return;
         if(!sys.empAvailable) { offerAdEMP(); return; }
-        const poolBlocks = document.getElementById('pool-zone').getElementsByClassName('block');
+        
+        const poolZone = document.getElementById('pool-zone');
+        if(!poolZone) return;
+        
+        const poolBlocks = poolZone.getElementsByClassName('block');
         let targetBlock = null;
         for (let i = 0; i < poolBlocks.length; i++) { if (poolBlocks[i].dataset.decoy === "true" && !poolBlocks[i].classList.contains('spell-broken')) { targetBlock = poolBlocks[i]; break; } }
         if (!targetBlock) { for (let i = 0; i < poolBlocks.length; i++) { if (poolBlocks[i].dataset.decoy === "true") { targetBlock = poolBlocks[i]; break; } } }
@@ -417,21 +461,32 @@
         if(targetBlock) {
             playSound('emp'); sys.empAvailable = false; 
             const empBtn = document.getElementById('emp-btn');
-            empBtn.innerText = "[ + AD FOR EMP ]"; empBtn.style.borderColor = "var(--neon-green)"; empBtn.style.color = "var(--neon-green)";
+            if(empBtn) { empBtn.innerText = "[ + AD FOR EMP ]"; empBtn.style.borderColor = "var(--neon-green)"; empBtn.style.color = "var(--neon-green)"; }
             targetBlock.style.transform = 'scale(0)'; setTimeout(() => targetBlock.remove(), 200);
-        } else { document.getElementById('system-msg').innerText = "NO DECOYS DETECTED"; }
+        } else { 
+            const sysMsg = document.getElementById('system-msg');
+            if(sysMsg) sysMsg.innerText = "NO DECOYS DETECTED"; 
+        }
     }
 
     function validateInput() {
-        const dropZone = document.getElementById('drop-zone'); let current = 0; 
+        const dropZone = document.getElementById('drop-zone'); 
+        if(!dropZone) return;
+        
+        let current = 0; 
         const droppedBlocks = dropZone.getElementsByClassName('block');
         for(let i = 0; i < droppedBlocks.length; i++) current += parseInt(droppedBlocks[i].dataset.val);
 
         if(current === sys.target) { processHackSuccess(); } 
         else if(current > sys.target) {
-            playSound('error'); document.getElementById('hud-container').classList.add('glitch-effect');
-            document.getElementById('system-msg').innerText = "DATA OVERLOAD!"; document.getElementById('system-msg').style.color = "var(--neon-pink)";
-            setTimeout(() => { document.getElementById('hud-container').classList.remove('glitch-effect'); offerAdRescue(); }, 400);
+            playSound('error'); 
+            const hud = document.getElementById('hud-container');
+            if(hud) hud.classList.add('glitch-effect');
+            
+            const sysMsg = document.getElementById('system-msg');
+            if(sysMsg) { sysMsg.innerText = "DATA OVERLOAD!"; sysMsg.style.color = "var(--neon-pink)"; }
+            
+            setTimeout(() => { if(hud) hud.classList.remove('glitch-effect'); offerAdRescue(); }, 400);
         }
     }
 
@@ -446,10 +501,14 @@
         
         window.cloudSave();
 
-        document.getElementById('score-txt').innerText = sys.score;
-        document.getElementById('core-txt').innerText = sys.cores;
-        document.getElementById('system-msg').innerText = `+${earnedPoints} PTS | +${earnedCores} CORES`;
-        document.getElementById('system-msg').style.color = "var(--neon-green)";
+        const scoreTxt = document.getElementById('score-txt');
+        if(scoreTxt) scoreTxt.innerText = sys.score;
+        
+        const coreTxt = document.getElementById('core-txt');
+        if(coreTxt) coreTxt.innerText = sys.cores;
+        
+        const sysMsg = document.getElementById('system-msg');
+        if(sysMsg) { sysMsg.innerText = `+${earnedPoints} PTS | +${earnedCores} CORES`; sysMsg.style.color = "var(--neon-green)"; }
         
         confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 }, colors: ['#00f3ff', '#39ff14', '#f1c40f'] });
         sys.level++; setTimeout(initProtocol, 2000);
@@ -457,63 +516,147 @@
 
     function offerAdRescue() {
         sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); sys.adRewardType = 'rescue';
-        document.getElementById('ad-title').innerText = "SYSTEM FAILURE"; document.getElementById('ad-desc').innerHTML = `Your <b>x${sys.combo} Combo</b> is at risk! Watch a sponsor feed to restore power.`;
-        document.getElementById('ad-abort-btn').innerText = "Abort (Lose Combo)"; document.getElementById('ad-abort-btn').style.display = 'inline-block';
-        document.getElementById('watch-ad-btn').style.display = 'block'; document.getElementById('ad-progress-container').style.display = 'none';
-        document.getElementById('ad-overlay').style.display = 'flex';
+        
+        const adTitle = document.getElementById('ad-title');
+        if(adTitle) adTitle.innerText = "SYSTEM FAILURE"; 
+        
+        const adDesc = document.getElementById('ad-desc');
+        if(adDesc) adDesc.innerHTML = `Your <b>x${sys.combo} Combo</b> is at risk! Watch a sponsor feed to restore power.`;
+        
+        const adAbortBtn = document.getElementById('ad-abort-btn');
+        if(adAbortBtn) { adAbortBtn.innerText = "Abort (Lose Combo)"; adAbortBtn.style.display = 'inline-block'; }
+        
+        const watchAdBtn = document.getElementById('watch-ad-btn');
+        if(watchAdBtn) watchAdBtn.style.display = 'block'; 
+        
+        const progressCont = document.getElementById('ad-progress-container');
+        if(progressCont) progressCont.style.display = 'none';
+        
+        const adOverlay = document.getElementById('ad-overlay');
+        if(adOverlay) adOverlay.style.display = 'flex';
     }
 
     function offerAdEMP() {
         sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); sys.adRewardType = 'emp';
-        document.getElementById('ad-title').innerText = "EMP DEPLETED"; document.getElementById('ad-desc').innerHTML = "Need assistance? Watch a sponsor feed to recharge your EMP.";
-        document.getElementById('ad-abort-btn').innerText = "Cancel"; document.getElementById('ad-abort-btn').style.display = 'inline-block';
-        document.getElementById('watch-ad-btn').style.display = 'block'; document.getElementById('ad-progress-container').style.display = 'none';
-        document.getElementById('ad-overlay').style.display = 'flex';
+        
+        const adTitle = document.getElementById('ad-title');
+        if(adTitle) adTitle.innerText = "EMP DEPLETED"; 
+        
+        const adDesc = document.getElementById('ad-desc');
+        if(adDesc) adDesc.innerHTML = "Need assistance? Watch a sponsor feed to recharge your EMP.";
+        
+        const adAbortBtn = document.getElementById('ad-abort-btn');
+        if(adAbortBtn) { adAbortBtn.innerText = "Cancel"; adAbortBtn.style.display = 'inline-block'; }
+        
+        const watchAdBtn = document.getElementById('watch-ad-btn');
+        if(watchAdBtn) watchAdBtn.style.display = 'block'; 
+        
+        const progressCont = document.getElementById('ad-progress-container');
+        if(progressCont) progressCont.style.display = 'none';
+        
+        const adOverlay = document.getElementById('ad-overlay');
+        if(adOverlay) adOverlay.style.display = 'flex';
     }
 
     function triggerAdNetwork() {
-        document.getElementById('watch-ad-btn').style.display = 'none'; document.getElementById('ad-abort-btn').style.display = 'none';
-        document.getElementById('ad-progress-container').style.display = 'block'; playSound('emp'); 
+        const watchAdBtn = document.getElementById('watch-ad-btn');
+        if(watchAdBtn) watchAdBtn.style.display = 'none'; 
+        
+        const adAbortBtn = document.getElementById('ad-abort-btn');
+        if(adAbortBtn) adAbortBtn.style.display = 'none';
+        
+        const progressCont = document.getElementById('ad-progress-container');
+        if(progressCont) progressCont.style.display = 'block'; 
+        
+        playSound('emp'); 
         let progress = 0; const progBar = document.getElementById('ad-progress-fill');
-        const adTimer = setInterval(() => { progress += 5; progBar.style.width = progress + '%'; if(progress >= 100) { clearInterval(adTimer); grantAdReward(); } }, 150); 
+        const adTimer = setInterval(() => { 
+            progress += 5; 
+            if(progBar) progBar.style.width = progress + '%'; 
+            if(progress >= 100) { clearInterval(adTimer); grantAdReward(); } 
+        }, 150); 
     }
 
     function grantAdReward() {
-        playSound('win'); document.getElementById('ad-overlay').style.display = 'none';
+        playSound('win'); 
+        const adOverlay = document.getElementById('ad-overlay');
+        if(adOverlay) adOverlay.style.display = 'none';
+        
+        const sysMsg = document.getElementById('system-msg');
+        
         if (sys.adRewardType === 'rescue') {
-            document.getElementById('system-msg').innerText = "SYSTEM RESTORED."; document.getElementById('system-msg').style.color = "var(--neon-green)";
+            if(sysMsg) { sysMsg.innerText = "SYSTEM RESTORED."; sysMsg.style.color = "var(--neon-green)"; }
             setTimeout(() => { initProtocol(); }, 1500);
         } else if (sys.adRewardType === 'emp') {
-            document.getElementById('system-msg').innerText = "EMP RECHARGED."; document.getElementById('system-msg').style.color = "var(--neon-green)";
-            sys.empAvailable = true; const empBtn = document.getElementById('emp-btn');
-            empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)";
+            if(sysMsg) { sysMsg.innerText = "EMP RECHARGED."; sysMsg.style.color = "var(--neon-green)"; }
+            sys.empAvailable = true; 
+            const empBtn = document.getElementById('emp-btn');
+            if(empBtn) { empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)"; }
             sys.active = true; startClock(true); 
         }
     }
 
     function cancelAd() {
         if (sys.adRewardType === 'rescue') { executeGameLoss(); } 
-        else { document.getElementById('ad-overlay').style.display = 'none'; sys.active = true; startClock(true); }
+        else { 
+            const adOverlay = document.getElementById('ad-overlay');
+            if(adOverlay) adOverlay.style.display = 'none'; 
+            sys.active = true; startClock(true); 
+        }
     }
 
     function executeGameLoss() {
-        document.getElementById('ad-overlay').style.display = 'none'; playSound('error'); 
-        if (sys.score > sys.topScore) { sys.topScore = sys.score; document.getElementById('top-score-txt').innerText = sys.topScore; window.cloudSave(); }
-        document.getElementById('system-msg').innerText = "COMBO LOST. RESETTING."; document.getElementById('system-msg').style.color = "var(--neon-pink)";
-        sys.level = 1; sys.score = 0; sys.combo = 1; setTimeout(() => { document.getElementById('score-txt').innerText = sys.score; initProtocol(); }, 2000);
+        const adOverlay = document.getElementById('ad-overlay');
+        if(adOverlay) adOverlay.style.display = 'none'; 
+        
+        playSound('error'); 
+        if (sys.score > sys.topScore) { 
+            sys.topScore = sys.score; 
+            const topScoreTxt = document.getElementById('top-score-txt');
+            if(topScoreTxt) topScoreTxt.innerText = sys.topScore; 
+            window.cloudSave(); 
+        }
+        
+        const sysMsg = document.getElementById('system-msg');
+        if(sysMsg) { sysMsg.innerText = "COMBO LOST. RESETTING."; sysMsg.style.color = "var(--neon-pink)"; }
+        
+        sys.level = 1; sys.score = 0; sys.combo = 1; 
+        
+        setTimeout(() => { 
+            const scoreTxt = document.getElementById('score-txt');
+            if(scoreTxt) scoreTxt.innerText = sys.score; 
+            initProtocol(); 
+        }, 2000);
     }
 
     function openStore() {
         if(!sys.active) return; sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval);
-        document.getElementById('store-core-balance').innerText = sys.cores; updateStoreUI(); document.getElementById('store-overlay').style.display = 'flex';
+        
+        const storeBalance = document.getElementById('store-core-balance');
+        if(storeBalance) storeBalance.innerText = sys.cores; 
+        
+        updateStoreUI(); 
+        
+        const storeOverlay = document.getElementById('store-overlay');
+        if(storeOverlay) storeOverlay.style.display = 'flex';
     }
 
-    function closeStore() { document.getElementById('store-overlay').style.display = 'none'; sys.active = true; startClock(true); }
+    function closeStore() { 
+        const storeOverlay = document.getElementById('store-overlay');
+        if(storeOverlay) storeOverlay.style.display = 'none'; 
+        sys.active = true; startClock(true); 
+    }
 
     function purchaseTheme(themeName, cost) {
         if(sys.cores >= cost && !sys.unlockedThemes.includes(themeName)) {
             playSound('buy'); sys.cores -= cost; sys.unlockedThemes.push(themeName); window.cloudSave();
-            document.getElementById('core-txt').innerText = sys.cores; document.getElementById('store-core-balance').innerText = sys.cores;
+            
+            const coreTxt = document.getElementById('core-txt');
+            if(coreTxt) coreTxt.innerText = sys.cores; 
+            
+            const storeBalance = document.getElementById('store-core-balance');
+            if(storeBalance) storeBalance.innerText = sys.cores;
+            
             applyTheme(themeName); updateStoreUI();
         } else { playSound('error'); }
     }
@@ -531,7 +674,14 @@
     function purchaseUpgrade(upgradeId, cost) {
         if(sys.cores >= cost && !sys.upgrades[upgradeId]) {
             playSound('buy'); sys.cores -= cost; sys.upgrades[upgradeId] = true; window.cloudSave();
-            document.getElementById('core-txt').innerText = sys.cores; document.getElementById('store-core-balance').innerText = sys.cores; updateStoreUI();
+            
+            const coreTxt = document.getElementById('core-txt');
+            if(coreTxt) coreTxt.innerText = sys.cores; 
+            
+            const storeBalance = document.getElementById('store-core-balance');
+            if(storeBalance) storeBalance.innerText = sys.cores; 
+            
+            updateStoreUI();
         } else { playSound('error'); }
     }
 
@@ -542,12 +692,20 @@
         const themes = [ { id: 'neon-pink', btn: 'buy-theme-1' }, { id: 'neon-green', btn: 'buy-theme-2' }, { id: 'reactive-zinc', btn: 'buy-theme-3' }, { id: 'cyber-gold', btn: 'buy-theme-4' }, { id: 'holo-glitch', btn: 'buy-theme-5' } ];
         themes.forEach(t => {
             const btn = document.getElementById(t.btn);
-            if(sys.unlockedThemes.includes(t.id)) { btn.innerText = "EQUIP"; btn.style.background = "var(--neon-cyan)"; btn.onclick = () => { applyTheme(t.id); playSound('drag'); closeStore(); }; }
+            if(btn && sys.unlockedThemes.includes(t.id)) { btn.innerText = "EQUIP"; btn.style.background = "var(--neon-cyan)"; btn.onclick = () => { applyTheme(t.id); playSound('drag'); closeStore(); }; }
         });
-        if(sys.upgrades.timeDilator) { const btn = document.getElementById('buy-upg-time'); btn.innerText = "ACQUIRED"; btn.disabled = true; }
-        if(sys.upgrades.spellbreaker) { const btn = document.getElementById('buy-upg-spell'); btn.innerText = "ACQUIRED"; btn.disabled = true; }
-        if(sys.upgrades.decoyDeflector) { const btn = document.getElementById('buy-upg-decoy'); btn.innerText = "ACQUIRED"; btn.disabled = true; }
-        if(sys.upgrades.overclocked) { const btn = document.getElementById('buy-upg-overclock'); btn.innerText = "ACQUIRED"; btn.disabled = true; }
+        
+        const upgTime = document.getElementById('buy-upg-time');
+        if(upgTime && sys.upgrades.timeDilator) { upgTime.innerText = "ACQUIRED"; upgTime.disabled = true; }
+        
+        const upgSpell = document.getElementById('buy-upg-spell');
+        if(upgSpell && sys.upgrades.spellbreaker) { upgSpell.innerText = "ACQUIRED"; upgSpell.disabled = true; }
+        
+        const upgDecoy = document.getElementById('buy-upg-decoy');
+        if(upgDecoy && sys.upgrades.decoyDeflector) { upgDecoy.innerText = "ACQUIRED"; upgDecoy.disabled = true; }
+        
+        const upgOver = document.getElementById('buy-upg-overclock');
+        if(upgOver && sys.upgrades.overclocked) { upgOver.innerText = "ACQUIRED"; upgOver.disabled = true; }
     }
 </script>
 
