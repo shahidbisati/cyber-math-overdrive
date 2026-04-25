@@ -202,8 +202,6 @@
     };
 
     // --- DUMMY CLOUD INTERFACE ---
-    // These functions act as placeholders. If the user plays offline or as a Guest, these are ignored.
-    // If they log in, the Module Script at the bottom overrides these with real Firebase functions.
     window.cloudConnect = async function() { return false; };
     window.cloudSave = async function() {};
     window.cloudLoad = async function(id) { return null; };
@@ -257,7 +255,6 @@
     }
 
     function startGuestSession() {
-        // Skips Firebase entirely, ensuring no crashes
         currentHackerId = "GUEST";
         sys = { 
             level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
@@ -272,7 +269,10 @@
         try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('hud-container').style.opacity = '1';
-        document.getElementById('display-hacker-id').innerText = currentHackerId;
+        
+        const idDisplay = document.getElementById('display-hacker-id');
+        if(idDisplay) idDisplay.innerText = currentHackerId;
+        
         document.getElementById('top-score-txt').innerText = sys.topScore;
         document.getElementById('core-txt').innerText = sys.cores;
         updateStoreUI(); playSound('win'); initProtocol();
@@ -545,11 +545,9 @@
 </script>
 
 <script type="module">
-    // 1. IMPORT FIREBASE
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-    // 2. YOUR EXACT CONFIG
     const firebaseConfig = {
         apiKey: "AIzaSyBgtFxsT_8S7QWk6nSpZwECjJQeKhNbIxE",
         authDomain: "cyber-math-db-8b962.firebaseapp.com",
@@ -563,7 +561,6 @@
     let app = null;
     let db = null;
 
-    // 3. OVERRIDE DUMMY FUNCTIONS WITH REAL CLOUD LOGIC
     window.cloudConnect = async function() {
         if(db) return true;
         try {
