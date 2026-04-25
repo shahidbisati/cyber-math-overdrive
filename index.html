@@ -207,14 +207,21 @@
         measurementId: "G-RL4B0DCB6F"
     };
 
-    // Initialize Firebase and the Database
-    let app, db;
-    try {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        console.log("Firebase and Firestore successfully initialized!");
-    } catch (e) {
-        console.error("Firebase not configured correctly yet.", e);
+    // Firebase Variables (Lazy Loaded later)
+    let app = null;
+    let db = null;
+
+    // LAZY LOAD FUNCTION: Only connects to Google if requested
+    async function wakeUpDatabase() {
+        if (db) return true; 
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            return true;
+        } catch (e) {
+            console.error("Firebase Database Init Error:", e);
+            return false;
+        }
     }
 
     // --- AUDIO ENGINE ---
@@ -255,7 +262,14 @@
 
     // --- LOGIN MODES ---
     window.startNewSession = async function() {
-        if(!db) { document.getElementById('auth-msg').innerText = "FIREBASE NOT CONFIGURED"; return; }
+        document.getElementById('auth-msg').innerText = "CONNECTING TO SECURE SERVER...";
+        
+        const isAwake = await wakeUpDatabase();
+        if(!isAwake || !db) { 
+            document.getElementById('auth-msg').innerText = "DATABASE CONNECTION FAILED."; 
+            return; 
+        }
+        
         document.getElementById('auth-msg').innerText = "GENERATING ID...";
         currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
         try { await saveToCloud(); startGameUI(); } 
@@ -263,10 +277,17 @@
     };
 
     window.loadHackerId = async function() {
-        if(!db) { document.getElementById('auth-msg').innerText = "FIREBASE NOT CONFIGURED"; return; }
         const input = document.getElementById('hacker-id-input').value.trim().toUpperCase();
         if(input.length < 5) { document.getElementById('auth-msg').innerText = "INVALID ID LENGTH"; return; }
         
+        document.getElementById('auth-msg').innerText = "CONNECTING TO SECURE SERVER...";
+        
+        const isAwake = await wakeUpDatabase();
+        if(!isAwake || !db) { 
+            document.getElementById('auth-msg').innerText = "DATABASE CONNECTION FAILED."; 
+            return; 
+        }
+
         document.getElementById('auth-msg').innerText = "SEARCHING DATABASE...";
         try {
             const docSnap = await getDoc(doc(db, "players", input));
@@ -281,8 +302,8 @@
     };
 
     window.startGuestSession = function() {
+        // We DO NOT wake up the database here. It stays offline safely.
         currentHackerId = "GUEST";
-        // THE HARD RESET: Force a total rebuild of the system memory
         sys = { 
             level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
             active: false, empAvailable: true, startTime: 0,
@@ -374,37 +395,47 @@
             
             document.getElementById('drop-zone').innerHTML = ''; document.getElementById('pool-zone').innerHTML = '';
             
-            Array.from(document.querySelectorAll('body > .block')).forEach(ghost => ghost.remove()); 
-            Array.from(document.querySelectorAll('#drag-placeholder')).forEach(p => p.remove());
+            // CROSS-BROWSER STABILITY PATCH: Using standard 'for' loops instead of querySelectorAll.forEach
+            const blocks = document.querySelectorAll('body > .block');
+            for (let i = 0; i < blocks.length; i++) { blocks[i].remove(); }
+            
+            const placeholders = document.querySelectorAll('#drag-placeholder');
+            for (let i = 0; i < placeholders.length; i++) { placeholders[i].remove(); }
+            
             draggedBlock = null; 
 
             document.getElementById('level-txt').innerText = sys.level; document.getElementById('combo-txt').innerText = sys.combo;
             document.getElementById('timer').classList.remove('danger-time'); clearInterval(heartbeatInterval); heartbeatInterval = null;
 
             const blockCount = Math.min(2 + Math.floor(sys.level / 3), 5); const maxVal = 10 + (sys.level * 2);
-            let sum = 0; let blocks = [];
-            for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; blocks.push({val: val, isDecoy: false}); }
+            let sum = 0; let newBlocks = [];
+            for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; newBlocks.push({val: val, isDecoy: false}); }
             sys.target = sum; document.getElementById('target-num').innerText = sum;
             
             const decoyCount = sys.upgrades.decoyDeflector ? 2 : 3;
-            for(let i=0; i<decoyCount; i++) { blocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); }
-            blocks.sort(() => Math.random() - 0.5);
+            for(let i=0; i<decoyCount; i++) { newBlocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); }
+            newBlocks.sort(() => Math.random() - 0.5);
 
-            blocks.forEach((bData, i) => {
+            for (let i = 0; i < newBlocks.length; i++) {
+                const bData = newBlocks[i];
                 const b = document.createElement('div'); b.className = 'block'; b.innerText = bData.val; b.id = 'blk-' + i;
                 b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
                 document.getElementById('pool-zone').appendChild(b);
-            });
+            }
 
             if(sys.upgrades.spellbreaker) {
-                const pool = document.getElementById('pool-zone');
-                const decoys = Array.from(pool.getElementsByClassName('block')).filter(b => b.dataset.decoy === "true");
-                if(decoys.length > 0) decoys[0].classList.add('spell-broken'); 
+                const poolBlocks = document.getElementById('pool-zone').getElementsByClassName('block');
+                for (let i = 0; i < poolBlocks.length; i++) {
+                    if (poolBlocks[i].dataset.decoy === "true") {
+                        poolBlocks[i].classList.add('spell-broken');
+                        break; // Only break one
+                    }
+                }
             }
             startClock(false);
 
         } catch (error) {
-            console.error("Game Loop Crashed:", error);
+            console.error("Game Engine Crashed:", error);
             document.getElementById('system-msg').innerText = "ENGINE CRASH. CHECK CONSOLE.";
             document.getElementById('system-msg').style.color = "var(--neon-pink)";
         }
@@ -431,22 +462,35 @@
         if(!sys.active) return;
         if(!sys.empAvailable) { offerAdEMP(); return; }
         
-        const pool = document.getElementById('pool-zone');
-        const decoys = Array.from(pool.getElementsByClassName('block')).filter(b => b.dataset.decoy === "true" && !b.classList.contains('spell-broken'));
-        const fallbackDecoys = Array.from(pool.getElementsByClassName('block')).filter(b => b.dataset.decoy === "true");
-        const targetList = decoys.length > 0 ? decoys : fallbackDecoys;
+        const poolBlocks = document.getElementById('pool-zone').getElementsByClassName('block');
+        let targetBlock = null;
+        
+        // Try to find an unbroken decoy first
+        for (let i = 0; i < poolBlocks.length; i++) {
+            if (poolBlocks[i].dataset.decoy === "true" && !poolBlocks[i].classList.contains('spell-broken')) {
+                targetBlock = poolBlocks[i]; break;
+            }
+        }
+        // Fallback to any decoy
+        if (!targetBlock) {
+            for (let i = 0; i < poolBlocks.length; i++) {
+                if (poolBlocks[i].dataset.decoy === "true") { targetBlock = poolBlocks[i]; break; }
+            }
+        }
 
-        if(targetList.length > 0) {
+        if(targetBlock) {
             playSound('emp'); sys.empAvailable = false; 
             const empBtn = document.getElementById('emp-btn');
             empBtn.innerText = "[ + AD FOR EMP ]"; empBtn.style.borderColor = "var(--neon-green)"; empBtn.style.color = "var(--neon-green)";
-            const targetBlock = targetList[0]; targetBlock.style.transform = 'scale(0)'; setTimeout(() => targetBlock.remove(), 200);
+            targetBlock.style.transform = 'scale(0)'; setTimeout(() => targetBlock.remove(), 200);
         } else { document.getElementById('system-msg').innerText = "NO DECOYS DETECTED"; }
     };
 
     function validateInput() {
         const dropZone = document.getElementById('drop-zone');
-        let current = 0; for(let b of dropZone.getElementsByClassName('block')) current += parseInt(b.dataset.val);
+        let current = 0; 
+        const droppedBlocks = dropZone.getElementsByClassName('block');
+        for(let i = 0; i < droppedBlocks.length; i++) current += parseInt(droppedBlocks[i].dataset.val);
 
         if(current === sys.target) { processHackSuccess(); } 
         else if(current > sys.target) {
@@ -569,6 +613,10 @@
     };
 
     function updateStoreUI() {
+        // Ensure upgrades object exists in case of corrupted memory
+        if (!sys.upgrades) sys.upgrades = { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false };
+        if (!sys.unlockedThemes) sys.unlockedThemes = [];
+
         const themes = [ { id: 'neon-pink', btn: 'buy-theme-1' }, { id: 'neon-green', btn: 'buy-theme-2' }, { id: 'reactive-zinc', btn: 'buy-theme-3' }, { id: 'cyber-gold', btn: 'buy-theme-4' }, { id: 'holo-glitch', btn: 'buy-theme-5' } ];
         themes.forEach(t => {
             const btn = document.getElementById(t.btn);
