@@ -191,38 +191,22 @@
     </div>
 </div>
 
-<script type="module">
-    // 1. IMPORT FIREBASE LIBRARIES
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-
-    // 2. YOUR EXACT CONFIG
-    const firebaseConfig = {
-        apiKey: "AIzaSyBgtFxsT_8S7QWk6nSpZwECjJQeKhNbIxE",
-        authDomain: "cyber-math-db-8b962.firebaseapp.com",
-        projectId: "cyber-math-db-8b962",
-        storageBucket: "cyber-math-db-8b962.firebasestorage.app",
-        messagingSenderId: "252299848545",
-        appId: "1:252299848545:web:7dc2809ee639a2125a3320",
-        measurementId: "G-RL4B0DCB6F"
+<script>
+    // --- GAME STATE ---
+    let currentHackerId = "";
+    let sys = { 
+        level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
+        active: false, empAvailable: true, startTime: 0,
+        combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
+        upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
     };
 
-    // Firebase Variables (Lazy Loaded later)
-    let app = null;
-    let db = null;
-
-    // LAZY LOAD FUNCTION: Only connects to Google if requested
-    async function wakeUpDatabase() {
-        if (db) return true; 
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            return true;
-        } catch (e) {
-            console.error("Firebase Database Init Error:", e);
-            return false;
-        }
-    }
+    // --- DUMMY CLOUD INTERFACE ---
+    // These functions act as placeholders. If the user plays offline or as a Guest, these are ignored.
+    // If they log in, the Module Script at the bottom overrides these with real Firebase functions.
+    window.cloudConnect = async function() { return false; };
+    window.cloudSave = async function() {};
+    window.cloudLoad = async function(id) { return null; };
 
     // --- AUDIO ENGINE ---
     let audioCtx; let heartbeatInterval = null;
@@ -239,70 +223,41 @@
         else if (type === 'buy') { osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1600, now+0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
     }
 
-    // --- GAME STATE ---
-    let currentHackerId = "";
-    let sys = { 
-        level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
-        active: false, empAvailable: true, startTime: 0,
-        combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
-        upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
-    };
-
-    // --- FIREBASE CLOUD SAVE ---
-    async function saveToCloud() {
-        if (!currentHackerId || currentHackerId === "GUEST" || !db) return;
-        const saveData = {
-            topScore: sys.topScore, cores: sys.cores,
-            unlockedThemes: sys.unlockedThemes, upgrades: sys.upgrades
-        };
-        try {
-            await setDoc(doc(db, "players", currentHackerId), saveData);
-        } catch (e) { console.error("Cloud Save Failed", e); }
+    // --- SESSION MANAGERS ---
+    async function startNewSession() {
+        document.getElementById('auth-msg').innerText = "CONNECTING...";
+        const connected = await window.cloudConnect();
+        if(!connected) { document.getElementById('auth-msg').innerText = "DATABASE FAILED TO CONNECT."; return; }
+        
+        currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        document.getElementById('auth-msg').innerText = "GENERATING ID...";
+        await window.cloudSave();
+        startGameUI();
     }
 
-    // --- LOGIN MODES ---
-    window.startNewSession = async function() {
-        document.getElementById('auth-msg').innerText = "CONNECTING TO SECURE SERVER...";
-        
-        const isAwake = await wakeUpDatabase();
-        if(!isAwake || !db) { 
-            document.getElementById('auth-msg').innerText = "DATABASE CONNECTION FAILED."; 
-            return; 
-        }
-        
-        document.getElementById('auth-msg').innerText = "GENERATING ID...";
-        currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
-        try { await saveToCloud(); startGameUI(); } 
-        catch (error) { console.error("Firebase Error: ", error); document.getElementById('auth-msg').innerText = "CONNECTION FAILED. CHECK CONSOLE."; }
-    };
-
-    window.loadHackerId = async function() {
+    async function loadHackerId() {
         const input = document.getElementById('hacker-id-input').value.trim().toUpperCase();
-        if(input.length < 5) { document.getElementById('auth-msg').innerText = "INVALID ID LENGTH"; return; }
+        if(input.length < 5) return;
         
-        document.getElementById('auth-msg').innerText = "CONNECTING TO SECURE SERVER...";
-        
-        const isAwake = await wakeUpDatabase();
-        if(!isAwake || !db) { 
-            document.getElementById('auth-msg').innerText = "DATABASE CONNECTION FAILED."; 
-            return; 
+        document.getElementById('auth-msg').innerText = "CONNECTING...";
+        const connected = await window.cloudConnect();
+        if(!connected) { document.getElementById('auth-msg').innerText = "DATABASE FAILED TO CONNECT."; return; }
+
+        document.getElementById('auth-msg').innerText = "SEARCHING...";
+        const data = await window.cloudLoad(input);
+        if(data) {
+            sys.topScore = data.topScore || 0; sys.cores = data.cores || 0;
+            sys.unlockedThemes = data.unlockedThemes || [];
+            sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
+            currentHackerId = input;
+            startGameUI();
+        } else {
+            document.getElementById('auth-msg').innerText = "HACKER ID NOT FOUND";
         }
+    }
 
-        document.getElementById('auth-msg').innerText = "SEARCHING DATABASE...";
-        try {
-            const docSnap = await getDoc(doc(db, "players", input));
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                sys.topScore = data.topScore || 0; sys.cores = data.cores || 0;
-                sys.unlockedThemes = data.unlockedThemes || [];
-                sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
-                currentHackerId = input; startGameUI();
-            } else { document.getElementById('auth-msg').innerText = "HACKER ID NOT FOUND"; }
-        } catch (e) { document.getElementById('auth-msg').innerText = "DATABASE ERROR"; console.error(e); }
-    };
-
-    window.startGuestSession = function() {
-        // We DO NOT wake up the database here. It stays offline safely.
+    function startGuestSession() {
+        // Skips Firebase entirely, ensuring no crashes
         currentHackerId = "GUEST";
         sys = { 
             level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
@@ -311,21 +266,19 @@
             upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
         };
         startGameUI();
-    };
+    }
 
     function startGameUI() {
         try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('hud-container').style.opacity = '1';
-        
         document.getElementById('display-hacker-id').innerText = currentHackerId;
         document.getElementById('top-score-txt').innerText = sys.topScore;
         document.getElementById('core-txt').innerText = sys.cores;
-        
         updateStoreUI(); playSound('win'); initProtocol();
     }
 
-    // --- UNIVERSAL POINTER INPUT ENGINE ---
+    // --- GAME ENGINE ---
     let draggedBlock = null; let offsetX = 0, offsetY = 0;
     function handlePointerDown(e) {
         if (!sys.active || draggedBlock) return;
@@ -346,7 +299,6 @@
         
         document.body.appendChild(draggedBlock);
         Object.assign(draggedBlock.style, { position:'fixed', margin:'0', width:rect.width+'px', height:rect.height+'px', left:rect.left+'px', top:rect.top+'px', zIndex:'9999' });
-        
         draggedBlock.classList.add('dragging'); playSound('drag');
     }
     function handlePointerMove(e) {
@@ -359,7 +311,6 @@
         if (!draggedBlock) return;
         const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
         const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-        
         draggedBlock.style.display = 'none';
         const elemBelow = document.elementFromPoint(clientX, clientY);
         draggedBlock.style.display = '';
@@ -385,60 +336,50 @@
     document.addEventListener('touchcancel', handlePointerUp);
 
     function initProtocol() {
-        try {
-            sys.active = true; sys.empAvailable = true; sys.startTime = Date.now();
-            document.getElementById('system-msg').innerText = "AWAITING INPUT...";
-            document.getElementById('system-msg').style.color = "var(--neon-cyan)";
-            
-            const empBtn = document.getElementById('emp-btn');
-            empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)";
-            
-            document.getElementById('drop-zone').innerHTML = ''; document.getElementById('pool-zone').innerHTML = '';
-            
-            // CROSS-BROWSER STABILITY PATCH: Using standard 'for' loops instead of querySelectorAll.forEach
-            const blocks = document.querySelectorAll('body > .block');
-            for (let i = 0; i < blocks.length; i++) { blocks[i].remove(); }
-            
-            const placeholders = document.querySelectorAll('#drag-placeholder');
-            for (let i = 0; i < placeholders.length; i++) { placeholders[i].remove(); }
-            
-            draggedBlock = null; 
+        sys.active = true; sys.empAvailable = true; sys.startTime = Date.now();
+        document.getElementById('system-msg').innerText = "AWAITING INPUT...";
+        document.getElementById('system-msg').style.color = "var(--neon-cyan)";
+        
+        const empBtn = document.getElementById('emp-btn');
+        empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)";
+        
+        document.getElementById('drop-zone').innerHTML = ''; document.getElementById('pool-zone').innerHTML = '';
+        
+        const blocks = document.querySelectorAll('body > .block');
+        for (let i = 0; i < blocks.length; i++) { blocks[i].remove(); }
+        const placeholders = document.querySelectorAll('#drag-placeholder');
+        for (let i = 0; i < placeholders.length; i++) { placeholders[i].remove(); }
+        draggedBlock = null; 
 
-            document.getElementById('level-txt').innerText = sys.level; document.getElementById('combo-txt').innerText = sys.combo;
-            document.getElementById('timer').classList.remove('danger-time'); clearInterval(heartbeatInterval); heartbeatInterval = null;
+        document.getElementById('level-txt').innerText = sys.level; document.getElementById('combo-txt').innerText = sys.combo;
+        document.getElementById('timer').classList.remove('danger-time'); clearInterval(heartbeatInterval); heartbeatInterval = null;
 
-            const blockCount = Math.min(2 + Math.floor(sys.level / 3), 5); const maxVal = 10 + (sys.level * 2);
-            let sum = 0; let newBlocks = [];
-            for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; newBlocks.push({val: val, isDecoy: false}); }
-            sys.target = sum; document.getElementById('target-num').innerText = sum;
-            
-            const decoyCount = sys.upgrades.decoyDeflector ? 2 : 3;
-            for(let i=0; i<decoyCount; i++) { newBlocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); }
-            newBlocks.sort(() => Math.random() - 0.5);
+        const blockCount = Math.min(2 + Math.floor(sys.level / 3), 5); const maxVal = 10 + (sys.level * 2);
+        let sum = 0; let newBlocks = [];
+        for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; newBlocks.push({val: val, isDecoy: false}); }
+        sys.target = sum; document.getElementById('target-num').innerText = sum;
+        
+        const decoyCount = sys.upgrades.decoyDeflector ? 2 : 3;
+        for(let i=0; i<decoyCount; i++) { newBlocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); }
+        newBlocks.sort(() => Math.random() - 0.5);
 
-            for (let i = 0; i < newBlocks.length; i++) {
-                const bData = newBlocks[i];
-                const b = document.createElement('div'); b.className = 'block'; b.innerText = bData.val; b.id = 'blk-' + i;
-                b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
-                document.getElementById('pool-zone').appendChild(b);
-            }
+        for (let i = 0; i < newBlocks.length; i++) {
+            const bData = newBlocks[i];
+            const b = document.createElement('div'); b.className = 'block'; b.innerText = bData.val; b.id = 'blk-' + i;
+            b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
+            document.getElementById('pool-zone').appendChild(b);
+        }
 
-            if(sys.upgrades.spellbreaker) {
-                const poolBlocks = document.getElementById('pool-zone').getElementsByClassName('block');
-                for (let i = 0; i < poolBlocks.length; i++) {
-                    if (poolBlocks[i].dataset.decoy === "true") {
-                        poolBlocks[i].classList.add('spell-broken');
-                        break; // Only break one
-                    }
+        if(sys.upgrades.spellbreaker) {
+            const poolBlocks = document.getElementById('pool-zone').getElementsByClassName('block');
+            for (let i = 0; i < poolBlocks.length; i++) {
+                if (poolBlocks[i].dataset.decoy === "true") {
+                    poolBlocks[i].classList.add('spell-broken');
+                    break;
                 }
             }
-            startClock(false);
-
-        } catch (error) {
-            console.error("Game Engine Crashed:", error);
-            document.getElementById('system-msg').innerText = "ENGINE CRASH. CHECK CONSOLE.";
-            document.getElementById('system-msg').style.color = "var(--neon-pink)";
         }
+        startClock(false);
     }
 
     function startClock(isResume = false) {
@@ -458,25 +399,13 @@
         }, 100);
     }
 
-    window.triggerEMP = function() {
+    function triggerEMP() {
         if(!sys.active) return;
         if(!sys.empAvailable) { offerAdEMP(); return; }
-        
         const poolBlocks = document.getElementById('pool-zone').getElementsByClassName('block');
         let targetBlock = null;
-        
-        // Try to find an unbroken decoy first
-        for (let i = 0; i < poolBlocks.length; i++) {
-            if (poolBlocks[i].dataset.decoy === "true" && !poolBlocks[i].classList.contains('spell-broken')) {
-                targetBlock = poolBlocks[i]; break;
-            }
-        }
-        // Fallback to any decoy
-        if (!targetBlock) {
-            for (let i = 0; i < poolBlocks.length; i++) {
-                if (poolBlocks[i].dataset.decoy === "true") { targetBlock = poolBlocks[i]; break; }
-            }
-        }
+        for (let i = 0; i < poolBlocks.length; i++) { if (poolBlocks[i].dataset.decoy === "true" && !poolBlocks[i].classList.contains('spell-broken')) { targetBlock = poolBlocks[i]; break; } }
+        if (!targetBlock) { for (let i = 0; i < poolBlocks.length; i++) { if (poolBlocks[i].dataset.decoy === "true") { targetBlock = poolBlocks[i]; break; } } }
 
         if(targetBlock) {
             playSound('emp'); sys.empAvailable = false; 
@@ -484,11 +413,10 @@
             empBtn.innerText = "[ + AD FOR EMP ]"; empBtn.style.borderColor = "var(--neon-green)"; empBtn.style.color = "var(--neon-green)";
             targetBlock.style.transform = 'scale(0)'; setTimeout(() => targetBlock.remove(), 200);
         } else { document.getElementById('system-msg').innerText = "NO DECOYS DETECTED"; }
-    };
+    }
 
     function validateInput() {
-        const dropZone = document.getElementById('drop-zone');
-        let current = 0; 
+        const dropZone = document.getElementById('drop-zone'); let current = 0; 
         const droppedBlocks = dropZone.getElementsByClassName('block');
         for(let i = 0; i < droppedBlocks.length; i++) current += parseInt(droppedBlocks[i].dataset.val);
 
@@ -503,14 +431,13 @@
     function processHackSuccess() {
         sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); playSound('win');
         let basePoints = 100; if(((Date.now() - sys.startTime) / 1000) < 5) basePoints = 300; 
-        
         let earnedPoints = basePoints * sys.combo;
         if(sys.upgrades.overclocked) earnedPoints = Math.floor(earnedPoints * 1.2);
 
         const earnedCores = Math.floor(sys.level * sys.combo * 2); 
         sys.score += earnedPoints; sys.cores += earnedCores; sys.combo++; 
         
-        saveToCloud();
+        window.cloudSave();
 
         document.getElementById('score-txt').innerText = sys.score;
         document.getElementById('core-txt').innerText = sys.cores;
@@ -523,8 +450,7 @@
 
     function offerAdRescue() {
         sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); sys.adRewardType = 'rescue';
-        document.getElementById('ad-title').innerText = "SYSTEM FAILURE";
-        document.getElementById('ad-desc').innerHTML = `Your <b>x${sys.combo} Combo</b> is at risk! Watch a sponsor feed to restore power.`;
+        document.getElementById('ad-title').innerText = "SYSTEM FAILURE"; document.getElementById('ad-desc').innerHTML = `Your <b>x${sys.combo} Combo</b> is at risk! Watch a sponsor feed to restore power.`;
         document.getElementById('ad-abort-btn').innerText = "Abort (Lose Combo)"; document.getElementById('ad-abort-btn').style.display = 'inline-block';
         document.getElementById('watch-ad-btn').style.display = 'block'; document.getElementById('ad-progress-container').style.display = 'none';
         document.getElementById('ad-overlay').style.display = 'flex';
@@ -532,23 +458,18 @@
 
     function offerAdEMP() {
         sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); sys.adRewardType = 'emp';
-        document.getElementById('ad-title').innerText = "EMP DEPLETED";
-        document.getElementById('ad-desc').innerHTML = "Need assistance? Watch a sponsor feed to recharge your EMP.";
+        document.getElementById('ad-title').innerText = "EMP DEPLETED"; document.getElementById('ad-desc').innerHTML = "Need assistance? Watch a sponsor feed to recharge your EMP.";
         document.getElementById('ad-abort-btn').innerText = "Cancel"; document.getElementById('ad-abort-btn').style.display = 'inline-block';
         document.getElementById('watch-ad-btn').style.display = 'block'; document.getElementById('ad-progress-container').style.display = 'none';
         document.getElementById('ad-overlay').style.display = 'flex';
     }
 
-    window.triggerAdNetwork = function() {
+    function triggerAdNetwork() {
         document.getElementById('watch-ad-btn').style.display = 'none'; document.getElementById('ad-abort-btn').style.display = 'none';
         document.getElementById('ad-progress-container').style.display = 'block'; playSound('emp'); 
-        
         let progress = 0; const progBar = document.getElementById('ad-progress-fill');
-        const adTimer = setInterval(() => {
-            progress += 5; progBar.style.width = progress + '%';
-            if(progress >= 100) { clearInterval(adTimer); grantAdReward(); }
-        }, 150); 
-    };
+        const adTimer = setInterval(() => { progress += 5; progBar.style.width = progress + '%'; if(progress >= 100) { clearInterval(adTimer); grantAdReward(); } }, 150); 
+    }
 
     function grantAdReward() {
         playSound('win'); document.getElementById('ad-overlay').style.display = 'none';
@@ -557,43 +478,38 @@
             setTimeout(() => { initProtocol(); }, 1500);
         } else if (sys.adRewardType === 'emp') {
             document.getElementById('system-msg').innerText = "EMP RECHARGED."; document.getElementById('system-msg').style.color = "var(--neon-green)";
-            sys.empAvailable = true;
-            const empBtn = document.getElementById('emp-btn');
+            sys.empAvailable = true; const empBtn = document.getElementById('emp-btn');
             empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)";
             sys.active = true; startClock(true); 
         }
     }
 
-    window.cancelAd = function() {
+    function cancelAd() {
         if (sys.adRewardType === 'rescue') { executeGameLoss(); } 
         else { document.getElementById('ad-overlay').style.display = 'none'; sys.active = true; startClock(true); }
-    };
+    }
 
-    window.executeGameLoss = function() {
+    function executeGameLoss() {
         document.getElementById('ad-overlay').style.display = 'none'; playSound('error'); 
-        if (sys.score > sys.topScore) { sys.topScore = sys.score; document.getElementById('top-score-txt').innerText = sys.topScore; saveToCloud(); }
+        if (sys.score > sys.topScore) { sys.topScore = sys.score; document.getElementById('top-score-txt').innerText = sys.topScore; window.cloudSave(); }
         document.getElementById('system-msg').innerText = "COMBO LOST. RESETTING."; document.getElementById('system-msg').style.color = "var(--neon-pink)";
-        sys.level = 1; sys.score = 0; sys.combo = 1; 
-        setTimeout(() => { document.getElementById('score-txt').innerText = sys.score; initProtocol(); }, 2000);
-    };
+        sys.level = 1; sys.score = 0; sys.combo = 1; setTimeout(() => { document.getElementById('score-txt').innerText = sys.score; initProtocol(); }, 2000);
+    }
 
-    window.openStore = function() {
-        if(!sys.active) return; 
-        sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval);
+    function openStore() {
+        if(!sys.active) return; sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval);
         document.getElementById('store-core-balance').innerText = sys.cores; updateStoreUI(); document.getElementById('store-overlay').style.display = 'flex';
-    };
+    }
 
-    window.closeStore = function() {
-        document.getElementById('store-overlay').style.display = 'none'; sys.active = true; startClock(true); 
-    };
+    function closeStore() { document.getElementById('store-overlay').style.display = 'none'; sys.active = true; startClock(true); }
 
-    window.purchaseTheme = function(themeName, cost) {
+    function purchaseTheme(themeName, cost) {
         if(sys.cores >= cost && !sys.unlockedThemes.includes(themeName)) {
-            playSound('buy'); sys.cores -= cost; sys.unlockedThemes.push(themeName); saveToCloud();
+            playSound('buy'); sys.cores -= cost; sys.unlockedThemes.push(themeName); window.cloudSave();
             document.getElementById('core-txt').innerText = sys.cores; document.getElementById('store-core-balance').innerText = sys.cores;
             applyTheme(themeName); updateStoreUI();
         } else { playSound('error'); }
-    };
+    }
 
     function applyTheme(themeName) {
         const root = document.documentElement;
@@ -605,15 +521,14 @@
         else { root.style.setProperty('--block-border', 'var(--neon-cyan)'); root.style.setProperty('--block-bg', 'rgba(0, 0, 0, 0.8)'); }
     }
 
-    window.purchaseUpgrade = function(upgradeId, cost) {
+    function purchaseUpgrade(upgradeId, cost) {
         if(sys.cores >= cost && !sys.upgrades[upgradeId]) {
-            playSound('buy'); sys.cores -= cost; sys.upgrades[upgradeId] = true; saveToCloud();
+            playSound('buy'); sys.cores -= cost; sys.upgrades[upgradeId] = true; window.cloudSave();
             document.getElementById('core-txt').innerText = sys.cores; document.getElementById('store-core-balance').innerText = sys.cores; updateStoreUI();
         } else { playSound('error'); }
-    };
+    }
 
     function updateStoreUI() {
-        // Ensure upgrades object exists in case of corrupted memory
         if (!sys.upgrades) sys.upgrades = { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false };
         if (!sys.unlockedThemes) sys.unlockedThemes = [];
 
@@ -627,6 +542,54 @@
         if(sys.upgrades.decoyDeflector) { const btn = document.getElementById('buy-upg-decoy'); btn.innerText = "ACQUIRED"; btn.disabled = true; }
         if(sys.upgrades.overclocked) { const btn = document.getElementById('buy-upg-overclock'); btn.innerText = "ACQUIRED"; btn.disabled = true; }
     }
+</script>
+
+<script type="module">
+    // 1. IMPORT FIREBASE
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+    // 2. YOUR EXACT CONFIG
+    const firebaseConfig = {
+        apiKey: "AIzaSyBgtFxsT_8S7QWk6nSpZwECjJQeKhNbIxE",
+        authDomain: "cyber-math-db-8b962.firebaseapp.com",
+        projectId: "cyber-math-db-8b962",
+        storageBucket: "cyber-math-db-8b962.firebasestorage.app",
+        messagingSenderId: "252299848545",
+        appId: "1:252299848545:web:7dc2809ee639a2125a3320",
+        measurementId: "G-RL4B0DCB6F"
+    };
+
+    let app = null;
+    let db = null;
+
+    // 3. OVERRIDE DUMMY FUNCTIONS WITH REAL CLOUD LOGIC
+    window.cloudConnect = async function() {
+        if(db) return true;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            return true;
+        } catch(e) {
+            console.error("Database connection failed:", e);
+            return false;
+        }
+    };
+
+    window.cloudSave = async function() {
+        if(!db || !currentHackerId || currentHackerId === "GUEST") return;
+        const data = { topScore: sys.topScore, cores: sys.cores, unlockedThemes: sys.unlockedThemes, upgrades: sys.upgrades };
+        try { await setDoc(doc(db, "players", currentHackerId), data); } catch(e) { console.error("Save failed:", e); }
+    };
+
+    window.cloudLoad = async function(id) {
+        if(!db) return null;
+        try {
+            const docSnap = await getDoc(doc(db, "players", id));
+            if(docSnap.exists()) return docSnap.data();
+        } catch(e) { console.error("Load failed:", e); }
+        return null;
+    };
 </script>
 </body>
 </html>
