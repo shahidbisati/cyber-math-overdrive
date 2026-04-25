@@ -243,7 +243,6 @@
 
     // --- FIREBASE CLOUD SAVE ---
     async function saveToCloud() {
-        // GUEST MODE SAFEGUARD: Do not save to database if playing as Guest
         if (!currentHackerId || currentHackerId === "GUEST" || !db) return;
         const saveData = {
             topScore: sys.topScore, cores: sys.cores,
@@ -283,14 +282,18 @@
 
     window.startGuestSession = function() {
         currentHackerId = "GUEST";
-        // Ensure completely clean slate for guest memory
-        sys.topScore = 0; sys.cores = 0; sys.unlockedThemes = []; 
-        sys.upgrades = { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false };
+        // THE HARD RESET: Force a total rebuild of the system memory
+        sys = { 
+            level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
+            active: false, empAvailable: true, startTime: 0,
+            combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
+            upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
+        };
         startGameUI();
     };
 
     function startGameUI() {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('hud-container').style.opacity = '1';
         
@@ -361,41 +364,50 @@
     document.addEventListener('touchcancel', handlePointerUp);
 
     function initProtocol() {
-        sys.active = true; sys.empAvailable = true; sys.startTime = Date.now();
-        document.getElementById('system-msg').innerText = "AWAITING INPUT...";
-        document.getElementById('system-msg').style.color = "var(--neon-cyan)";
-        
-        const empBtn = document.getElementById('emp-btn');
-        empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)";
-        
-        document.getElementById('drop-zone').innerHTML = ''; document.getElementById('pool-zone').innerHTML = '';
-        document.querySelectorAll('body > .block').forEach(ghost => ghost.remove()); document.querySelectorAll('#drag-placeholder').forEach(p => p.remove());
-        draggedBlock = null; 
+        try {
+            sys.active = true; sys.empAvailable = true; sys.startTime = Date.now();
+            document.getElementById('system-msg').innerText = "AWAITING INPUT...";
+            document.getElementById('system-msg').style.color = "var(--neon-cyan)";
+            
+            const empBtn = document.getElementById('emp-btn');
+            empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)";
+            
+            document.getElementById('drop-zone').innerHTML = ''; document.getElementById('pool-zone').innerHTML = '';
+            
+            Array.from(document.querySelectorAll('body > .block')).forEach(ghost => ghost.remove()); 
+            Array.from(document.querySelectorAll('#drag-placeholder')).forEach(p => p.remove());
+            draggedBlock = null; 
 
-        document.getElementById('level-txt').innerText = sys.level; document.getElementById('combo-txt').innerText = sys.combo;
-        document.getElementById('timer').classList.remove('danger-time'); clearInterval(heartbeatInterval); heartbeatInterval = null;
+            document.getElementById('level-txt').innerText = sys.level; document.getElementById('combo-txt').innerText = sys.combo;
+            document.getElementById('timer').classList.remove('danger-time'); clearInterval(heartbeatInterval); heartbeatInterval = null;
 
-        const blockCount = Math.min(2 + Math.floor(sys.level / 3), 5); const maxVal = 10 + (sys.level * 2);
-        let sum = 0; let blocks = [];
-        for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; blocks.push({val: val, isDecoy: false}); }
-        sys.target = sum; document.getElementById('target-num').innerText = sum;
-        
-        const decoyCount = sys.upgrades.decoyDeflector ? 2 : 3;
-        for(let i=0; i<decoyCount; i++) { blocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); }
-        blocks.sort(() => Math.random() - 0.5);
+            const blockCount = Math.min(2 + Math.floor(sys.level / 3), 5); const maxVal = 10 + (sys.level * 2);
+            let sum = 0; let blocks = [];
+            for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; blocks.push({val: val, isDecoy: false}); }
+            sys.target = sum; document.getElementById('target-num').innerText = sum;
+            
+            const decoyCount = sys.upgrades.decoyDeflector ? 2 : 3;
+            for(let i=0; i<decoyCount; i++) { blocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); }
+            blocks.sort(() => Math.random() - 0.5);
 
-        blocks.forEach((bData, i) => {
-            const b = document.createElement('div'); b.className = 'block'; b.innerText = bData.val; b.id = 'blk-' + i;
-            b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
-            document.getElementById('pool-zone').appendChild(b);
-        });
+            blocks.forEach((bData, i) => {
+                const b = document.createElement('div'); b.className = 'block'; b.innerText = bData.val; b.id = 'blk-' + i;
+                b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
+                document.getElementById('pool-zone').appendChild(b);
+            });
 
-        if(sys.upgrades.spellbreaker) {
-            const pool = document.getElementById('pool-zone');
-            const decoys = Array.from(pool.getElementsByClassName('block')).filter(b => b.dataset.decoy === "true");
-            if(decoys.length > 0) decoys[0].classList.add('spell-broken'); 
+            if(sys.upgrades.spellbreaker) {
+                const pool = document.getElementById('pool-zone');
+                const decoys = Array.from(pool.getElementsByClassName('block')).filter(b => b.dataset.decoy === "true");
+                if(decoys.length > 0) decoys[0].classList.add('spell-broken'); 
+            }
+            startClock(false);
+
+        } catch (error) {
+            console.error("Game Loop Crashed:", error);
+            document.getElementById('system-msg').innerText = "ENGINE CRASH. CHECK CONSOLE.";
+            document.getElementById('system-msg').style.color = "var(--neon-pink)";
         }
-        startClock(false);
     }
 
     function startClock(isResume = false) {
@@ -454,7 +466,7 @@
         const earnedCores = Math.floor(sys.level * sys.combo * 2); 
         sys.score += earnedPoints; sys.cores += earnedCores; sys.combo++; 
         
-        saveToCloud(); // Save to database (will abort if playing as GUEST)
+        saveToCloud();
 
         document.getElementById('score-txt').innerText = sys.score;
         document.getElementById('core-txt').innerText = sys.cores;
