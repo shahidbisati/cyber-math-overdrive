@@ -93,7 +93,7 @@
         .hacker-input:focus { outline: none; box-shadow: 0 0 10px var(--neon-cyan); }
         .start-btn { background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan); padding: 12px 20px; font-family: 'Orbitron'; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; width: 100%; margin-bottom: 10px;}
         .start-btn:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 20px var(--neon-cyan); }
-        .start-btn-alt { background: transparent; color: var(--neon-pink); border: 2px solid var(--neon-pink); padding: 12px 20px; font-family: 'Orbitron'; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; width: 100%;}
+        .start-btn-alt { background: transparent; color: var(--neon-pink); border: 2px solid var(--neon-pink); padding: 12px 20px; font-family: 'Orbitron'; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; width: 100%; margin-bottom: 10px;}
         .start-btn-alt:hover { background: var(--neon-pink); color: black; box-shadow: 0 0 20px var(--neon-pink); }
         .start-btn-guest { background: transparent; color: #888; border: 2px solid #555; padding: 10px 20px; font-family: 'Orbitron'; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; width: 100%; margin-bottom: 0;}
         .start-btn-guest:hover { background: #555; color: white; box-shadow: 0 0 15px #555; }
@@ -124,28 +124,33 @@
         <form onsubmit="event.preventDefault(); loadHackerId();" style="width: 100%;">
             <p style="font-size:12px; color:#888; margin-top:0;">ENTER HACKER ID TO RESUME</p>
             <input type="text" id="hacker-id-input" name="username" autocomplete="username" class="hacker-input" placeholder="e.g. X7K9P2" maxlength="6">
-            
-            <input type="password" name="password" autocomplete="current-password" value="CyberMath123" style="position: absolute; left: -9999px;" tabindex="-1">
-            
             <button type="submit" class="start-btn">RESUME SESSION</button>
         </form>
         
         <div style="margin: 15px 0; border-bottom: 1px solid #444;"></div>
         
-        <p style="font-size:12px; color:#888; margin-top:0;">OR CREATE A NEW ACCOUNT</p>
-        <button class="start-btn-alt" onclick="startNewSession()">NEW HACKER</button>
+        <p style="font-size:12px; color:#888; margin-top:0;">SELECT PROTOCOL & START</p>
+        <select id="difficulty-select" class="hacker-input" style="margin-bottom: 15px; background: rgba(0,0,0,0.8); cursor: pointer;">
+            <option value="easy">EASY MODE (x0.5)</option>
+            <option value="medium" selected>MEDIUM MODE (x1)</option>
+            <option value="hard">HARD MODE (x1.5)</option>
+        </select>
 
-        <div style="margin: 15px 0; border-bottom: 1px solid #444;"></div>
-        
+        <button class="start-btn-alt" onclick="startNewSession()">NEW HACKER</button>
         <button class="start-btn-guest" onclick="startGuestSession()">GUEST ACCESS</button>
+        
         <p id="auth-msg" style="color:var(--neon-pink); font-size:12px; height:15px; margin-bottom:0; font-weight:bold; margin-top: 10px;"></p>
     </div>
 </div>
 
 <div id="id-modal" class="overlay" style="justify-content:center; padding: 20px; z-index: 150; background: rgba(5, 5, 16, 0.99);">
     <h2 style="color: var(--neon-green); font-family: 'Orbitron'; font-size:24px; text-align:center; text-shadow: 0 0 10px var(--neon-green);">ID GENERATED</h2>
-    <p style="margin-bottom: 20px; font-size:14px; text-align:center; color: #fff;">This is your secure Hacker ID.<br>Write it down or save it to your browser!</p>
-    <div style="font-family: 'Orbitron'; font-weight: bold; font-size: 45px; color: var(--neon-cyan); letter-spacing: 5px; margin-bottom: 30px; text-shadow: 0 0 20px var(--neon-cyan);" id="id-modal-text">---</div>
+    <p style="margin-bottom: 20px; font-size:14px; text-align:center; color: #fff;">This is your secure Hacker ID.<br>Write it down or copy it to resume later!</p>
+    
+    <div style="font-family: 'Orbitron'; font-weight: bold; font-size: 45px; color: var(--neon-cyan); letter-spacing: 5px; margin-bottom: 15px; text-shadow: 0 0 20px var(--neon-cyan);" id="id-modal-text">---</div>
+    
+    <button class="action-btn" id="copy-id-btn" onclick="copyHackerId()" style="border-color:var(--neon-cyan); color:var(--neon-cyan); width: 80%; max-width: 300px; margin-bottom: 15px;">[ COPY TO CLIPBOARD ]</button>
+    
     <button class="action-btn" onclick="closeIdModal()" style="border-color:var(--neon-green); color:var(--neon-green); width: 80%; max-width: 300px;">[ I WROTE IT DOWN ]</button>
 </div>
 
@@ -156,6 +161,9 @@
             <div class="stat-box" style="color: #fff; display: flex; align-items: center; gap: 10px; margin-top: 5px;">
                 <span>ID: <span id="display-hacker-id" style="color:var(--neon-cyan); font-weight:bold;">---</span></span>
                 <button class="logout-btn" onclick="logoutSession()">[ LOGOUT ]</button>
+            </div>
+            <div class="stat-box" style="color: #fff; margin-top: 5px;">
+                <span style="color: var(--neon-pink); font-weight: bold; text-transform: uppercase;" id="display-diff">MEDIUM</span>
             </div>
         </div>
         <div style="text-align: right;">
@@ -222,6 +230,7 @@
         level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
         active: false, empAvailable: true, startTime: 0,
         combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
+        difficulty: 'medium', // NEW: Global difficulty state
         upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
     };
 
@@ -252,7 +261,6 @@
             const msgBox = document.getElementById('auth-msg');
             if(msgBox) msgBox.innerText = "SAVED ID FOUND. CLICK RESUME.";
             
-            // Quietly prepare the data in the background
             const connected = await window.cloudConnect();
             if (connected) {
                 const data = await window.cloudLoad(savedId);
@@ -261,21 +269,13 @@
                     sys.cores = data.cores || 0;
                     sys.level = data.level || 1;
                     sys.combo = data.combo || 1; 
+                    sys.difficulty = data.difficulty || 'medium';
                     sys.unlockedThemes = data.unlockedThemes || [];
                     sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
                 }
             }
         }
     });
-
-    function triggerCredentialPrompt(hackerId) {
-        try {
-            if (window.PasswordCredential && navigator.credentials) {
-                const cred = new PasswordCredential({ id: hackerId, password: 'CyberMath123', name: 'Cyber-Math Hacker' });
-                navigator.credentials.store(cred);
-            }
-        } catch(e) {}
-    }
 
     // --- SESSION MANAGERS ---
     window.startNewSession = async function() {
@@ -285,11 +285,15 @@
         if(!connected) { if(msgBox) msgBox.innerText = "DATABASE FAILED TO CONNECT."; return; }
         
         currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        // Grab difficulty from the dropdown
+        const diffSelect = document.getElementById('difficulty-select');
+        sys.difficulty = diffSelect ? diffSelect.value : 'medium';
+
         if(msgBox) msgBox.innerText = "GENERATING ID...";
         await window.cloudSave();
         
         localStorage.setItem('cm_hacker_id', currentHackerId);
-        triggerCredentialPrompt(currentHackerId);
         
         const startScreen = document.getElementById('start-screen');
         if(startScreen) startScreen.style.display = 'none';
@@ -305,6 +309,24 @@
         const idModal = document.getElementById('id-modal');
         if(idModal) idModal.style.display = 'none';
         startGameUI();
+    };
+
+    window.copyHackerId = function() {
+        navigator.clipboard.writeText(currentHackerId).then(() => {
+            playSound('drag');
+            const btn = document.getElementById('copy-id-btn');
+            btn.innerText = "[ COPIED! ]";
+            btn.style.background = "var(--neon-cyan)";
+            btn.style.color = "black";
+            
+            setTimeout(() => {
+                btn.innerText = "[ COPY TO CLIPBOARD ]";
+                btn.style.background = "transparent";
+                btn.style.color = "var(--neon-cyan)";
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
     };
 
     window.loadHackerId = async function() {
@@ -326,12 +348,12 @@
             sys.cores = data.cores || 0;
             sys.level = data.level || 1;
             sys.combo = data.combo || 1;
+            sys.difficulty = data.difficulty || 'medium'; // Restore saved difficulty
             sys.unlockedThemes = data.unlockedThemes || [];
             sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
             currentHackerId = input;
             
             localStorage.setItem('cm_hacker_id', currentHackerId);
-            triggerCredentialPrompt(currentHackerId);
             
             startGameUI();
         } else {
@@ -341,10 +363,14 @@
 
     window.startGuestSession = function() {
         currentHackerId = "GUEST";
+        const diffSelect = document.getElementById('difficulty-select');
+        const selectedDiff = diffSelect ? diffSelect.value : 'medium';
+
         sys = { 
             level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
             active: false, empAvailable: true, startTime: 0,
             combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
+            difficulty: selectedDiff, // Apply selected difficulty to Guest
             upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
         };
         localStorage.setItem('cm_hacker_id', 'GUEST');
@@ -368,6 +394,9 @@
         const idDisplay = document.getElementById('display-hacker-id');
         if(idDisplay) idDisplay.innerText = currentHackerId;
         
+        const diffDisplay = document.getElementById('display-diff');
+        if(diffDisplay) diffDisplay.innerText = sys.difficulty + " MODE"; 
+
         const levelTxt = document.getElementById('level-txt');
         if(levelTxt) levelTxt.innerText = sys.level; 
         
@@ -474,7 +503,17 @@
         
         clearInterval(heartbeatInterval); heartbeatInterval = null;
 
-        const blockCount = Math.min(2 + Math.floor(sys.level / 3), 5); const maxVal = 10 + (sys.level * 2);
+        // DIFFICULTY SCALING: Block Generation
+        let blockCount;
+        if(sys.difficulty === 'easy') blockCount = Math.min(2 + Math.floor(sys.level / 4), 4);
+        else if(sys.difficulty === 'hard') blockCount = Math.min(3 + Math.floor(sys.level / 2), 6);
+        else blockCount = Math.min(2 + Math.floor(sys.level / 3), 5);
+
+        let maxVal;
+        if(sys.difficulty === 'easy') maxVal = 5 + (sys.level * 2);
+        else if(sys.difficulty === 'hard') maxVal = 15 + (sys.level * 3);
+        else maxVal = 10 + (sys.level * 2);
+
         let sum = 0; let newBlocks = [];
         for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; newBlocks.push({val: val, isDecoy: false}); }
         sys.target = sum; 
@@ -510,7 +549,12 @@
     function startClock(isResume = false) {
         clearInterval(sys.timerInterval);
         if (!isResume) {
-            let calculatedTime = Math.max(10, 30 - Math.floor(sys.level / 2));
+            // DIFFICULTY SCALING: Timer Math
+            let calculatedTime;
+            if(sys.difficulty === 'easy') calculatedTime = Math.max(15, 40 - Math.floor(sys.level / 3));
+            else if(sys.difficulty === 'hard') calculatedTime = Math.max(8, 25 - Math.floor(sys.level / 1.5));
+            else calculatedTime = Math.max(10, 30 - Math.floor(sys.level / 2));
+
             if(sys.upgrades.timeDilator) calculatedTime += 3.0;
             sys.time = calculatedTime;
         }
@@ -576,17 +620,25 @@
 
     function processHackSuccess() {
         sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); playSound('win');
-        let basePoints = 100; if(((Date.now() - sys.startTime) / 1000) < 5) basePoints = 300; 
-        let earnedPoints = basePoints * sys.combo;
         
-        let earnedCores = 10 + Math.floor(sys.level * sys.combo * 2); 
+        // DIFFICULTY SCALING: Economy Multipliers
+        let diffMult = sys.difficulty === 'easy' ? 0.5 : (sys.difficulty === 'hard' ? 1.5 : 1);
+        let baseTimePoints = ((Date.now() - sys.startTime) / 1000) < 5 ? 300 : 100; 
+        
+        let earnedPoints = Math.floor(baseTimePoints * sys.combo * diffMult);
+        
+        let baseCores = sys.difficulty === 'easy' ? 5 : (sys.difficulty === 'hard' ? 15 : 10);
+        let earnedCores = baseCores + Math.floor(sys.level * sys.combo * 2 * diffMult); 
 
         if(sys.upgrades.overclocked) {
             earnedPoints = Math.floor(earnedPoints * 1.2);
             earnedCores = Math.floor(earnedCores * 1.2);
         }
 
-        sys.score += earnedPoints; sys.cores += earnedCores; sys.combo++; 
+        sys.score += earnedPoints; 
+        sys.cores += earnedCores; 
+        sys.combo++; 
+        sys.level++; 
         
         window.cloudSave();
 
@@ -600,7 +652,7 @@
         if(sysMsg) { sysMsg.innerText = `+${earnedPoints} PTS | +${earnedCores} CORES`; sysMsg.style.color = "var(--neon-green)"; }
         
         confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 }, colors: ['#00f3ff', '#39ff14', '#f1c40f'] });
-        sys.level++; setTimeout(initProtocol, 2000);
+        setTimeout(initProtocol, 2000);
     }
 
     function offerAdRescue() {
@@ -830,11 +882,13 @@
     window.cloudSave = async function() {
         if(!db || !currentHackerId || currentHackerId === "GUEST") return;
         
+        // NEW: Difficulty state is now synced to the cloud database
         const data = { 
             topScore: sys.topScore, 
             cores: sys.cores, 
             level: sys.level, 
-            combo: sys.combo, // Combo is now properly saved to the database!
+            combo: sys.combo,
+            difficulty: sys.difficulty, 
             unlockedThemes: sys.unlockedThemes, 
             upgrades: sys.upgrades 
         };
