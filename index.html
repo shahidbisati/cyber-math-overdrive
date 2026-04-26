@@ -5,12 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cyber-Math Overdrive (Full-Stack Edition)</title>
     
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Cyber-Math">
-    <link rel="apple-touch-icon" href="icon.svg">
-    
     <script>
     (adsbygoogle = window.adsbygoogle || []).push({
      params: { tag_for_child_directed_treatment: 1 }
@@ -35,6 +29,7 @@
             touch-action: none; 
         }
 
+        /* --- DENSE GALAXY BACKGROUND ENGINE --- */
         .galaxy-bg {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: 
@@ -583,32 +578,30 @@
         
         clearInterval(heartbeatInterval); heartbeatInterval = null;
 
-        // --- THE PERFECTED MATH BRAIN 2.1 ---
+        // --- MATH BRAIN: SMOOTH SCALING ---
         let minTarget, maxTarget, blockCount, baseDecoyCount;
 
         if (sys.difficulty === 'easy') {
             minTarget = 5 + (sys.level * 2);
             maxTarget = 10 + (sys.level * 4);
             blockCount = Math.min(2 + Math.floor((sys.level - 1) / 4), 3); 
-            // 0 Decoys for Levels 1-3, 1 Decoy for 4-7, max 2.
-            baseDecoyCount = sys.level < 4 ? 0 : Math.min(1 + Math.floor((sys.level - 4) / 4), 2); 
+            baseDecoyCount = Math.min(Math.floor(sys.level / 4), 2); 
         } 
         else if (sys.difficulty === 'hard') {
             minTarget = 15 + (sys.level * 5);
             maxTarget = 30 + (sys.level * 8);
             blockCount = Math.min(3 + Math.floor((sys.level - 1) / 3), 5); 
-            // Starts at 2 Decoys, scales aggressively to 5
             baseDecoyCount = Math.min(2 + Math.floor((sys.level - 1) / 2), 5); 
         } 
-        else { // MEDIUM
+        else {
+            // MEDIUM
             minTarget = 10 + (sys.level * 3);
             maxTarget = 20 + (sys.level * 6);
             blockCount = Math.min(2 + Math.floor((sys.level - 1) / 3), 4); 
-            // Smooth scaling: Level 1-2 (1 Decoy), Level 3-5 (2 Decoys), Level 6+ (3 to max 4)
             baseDecoyCount = Math.min(1 + Math.floor((sys.level - 1) / 2), 4); 
         }
 
-        // BOSS NODE LOGIC (Every 5 levels)
+        // BOSS NODE LOGIC
         let isBossNode = (sys.level % 5 === 0);
         if (isBossNode) {
             sys.target = Math.ceil((Math.random() * (maxTarget - minTarget) + minTarget) / 10) * 10;
@@ -894,10 +887,11 @@
         
         // INSTANT HUD RESET FIX
         sys.level = 1; sys.score = 0; sys.combo = 1; 
+        
         const scoreTxt = document.getElementById('score-txt');
-        if(scoreTxt) scoreTxt.innerText = sys.score; 
+        if(scoreTxt) scoreTxt.innerText = sys.score;
         const levelTxt = document.getElementById('level-txt');
-        if(levelTxt) levelTxt.innerText = sys.level; 
+        if(levelTxt) levelTxt.innerText = sys.level;
         const comboTxt = document.getElementById('combo-txt');
         if(comboTxt) comboTxt.innerText = sys.combo;
 
