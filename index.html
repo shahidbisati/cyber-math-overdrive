@@ -131,9 +131,9 @@
         
         <p style="font-size:12px; color:#888; margin-top:0;">SELECT PROTOCOL & START</p>
         <select id="difficulty-select" class="hacker-input" style="margin-bottom: 15px; background: rgba(0,0,0,0.8); cursor: pointer;">
-            <option value="easy">EASY MODE (x0.5)</option>
-            <option value="medium" selected>MEDIUM MODE (x1)</option>
-            <option value="hard">HARD MODE (x1.5)</option>
+            <option value="easy">EASY MODE</option>
+            <option value="medium" selected>MEDIUM MODE</option>
+            <option value="hard">HARD MODE</option>
         </select>
 
         <button class="start-btn-alt" onclick="startNewSession()">NEW HACKER</button>
@@ -230,7 +230,7 @@
         level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
         active: false, empAvailable: true, startTime: 0,
         combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
-        difficulty: 'medium', // NEW: Global difficulty state
+        difficulty: 'medium', 
         upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
     };
 
@@ -286,7 +286,6 @@
         
         currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
         
-        // Grab difficulty from the dropdown
         const diffSelect = document.getElementById('difficulty-select');
         sys.difficulty = diffSelect ? diffSelect.value : 'medium';
 
@@ -348,7 +347,7 @@
             sys.cores = data.cores || 0;
             sys.level = data.level || 1;
             sys.combo = data.combo || 1;
-            sys.difficulty = data.difficulty || 'medium'; // Restore saved difficulty
+            sys.difficulty = data.difficulty || 'medium'; 
             sys.unlockedThemes = data.unlockedThemes || [];
             sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
             currentHackerId = input;
@@ -370,7 +369,7 @@
             level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
             active: false, empAvailable: true, startTime: 0,
             combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
-            difficulty: selectedDiff, // Apply selected difficulty to Guest
+            difficulty: selectedDiff, 
             upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
         };
         localStorage.setItem('cm_hacker_id', 'GUEST');
@@ -503,16 +502,16 @@
         
         clearInterval(heartbeatInterval); heartbeatInterval = null;
 
-        // DIFFICULTY SCALING: Block Generation
+        // --- THE GENIUS LOGIC: Perfect Math Scaling ---
         let blockCount;
-        if(sys.difficulty === 'easy') blockCount = Math.min(2 + Math.floor(sys.level / 4), 4);
-        else if(sys.difficulty === 'hard') blockCount = Math.min(3 + Math.floor(sys.level / 2), 6);
-        else blockCount = Math.min(2 + Math.floor(sys.level / 3), 5);
+        if(sys.difficulty === 'easy') blockCount = Math.min(2 + Math.floor(sys.level / 8), 3); 
+        else if(sys.difficulty === 'hard') blockCount = Math.min(3 + Math.floor(sys.level / 3), 6); 
+        else blockCount = Math.min(2 + Math.floor(sys.level / 4), 5);
 
         let maxVal;
-        if(sys.difficulty === 'easy') maxVal = 5 + (sys.level * 2);
-        else if(sys.difficulty === 'hard') maxVal = 15 + (sys.level * 3);
-        else maxVal = 10 + (sys.level * 2);
+        if(sys.difficulty === 'easy') maxVal = Math.floor(5 + (sys.level * 1.2)); 
+        else if(sys.difficulty === 'hard') maxVal = Math.floor(15 + (sys.level * 3.5)); 
+        else maxVal = Math.floor(10 + (sys.level * 2));
 
         let sum = 0; let newBlocks = [];
         for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; newBlocks.push({val: val, isDecoy: false}); }
@@ -521,7 +520,14 @@
         const targetNum = document.getElementById('target-num');
         if(targetNum) targetNum.innerText = sum;
         
-        const decoyCount = sys.upgrades.decoyDeflector ? 2 : 3;
+        // --- THE GENIUS LOGIC: Decoy Scaling ---
+        let decoyCount;
+        let deflectorBonus = sys.upgrades.decoyDeflector ? 1 : 0;
+        
+        if(sys.difficulty === 'easy') decoyCount = Math.max(1 - deflectorBonus, 0); 
+        else if(sys.difficulty === 'hard') decoyCount = Math.max(4 - deflectorBonus, 2); 
+        else decoyCount = Math.max(3 - deflectorBonus, 1); 
+
         for(let i=0; i<decoyCount; i++) { newBlocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); }
         newBlocks.sort(() => Math.random() - 0.5);
 
@@ -549,11 +555,10 @@
     function startClock(isResume = false) {
         clearInterval(sys.timerInterval);
         if (!isResume) {
-            // DIFFICULTY SCALING: Timer Math
             let calculatedTime;
-            if(sys.difficulty === 'easy') calculatedTime = Math.max(15, 40 - Math.floor(sys.level / 3));
-            else if(sys.difficulty === 'hard') calculatedTime = Math.max(8, 25 - Math.floor(sys.level / 1.5));
-            else calculatedTime = Math.max(10, 30 - Math.floor(sys.level / 2));
+            if(sys.difficulty === 'easy') calculatedTime = Math.max(20, 45 - sys.level); 
+            else if(sys.difficulty === 'hard') calculatedTime = Math.max(7, 20 - sys.level); 
+            else calculatedTime = Math.max(10, 30 - Math.floor(sys.level * 1.5));
 
             if(sys.upgrades.timeDilator) calculatedTime += 3.0;
             sys.time = calculatedTime;
@@ -621,7 +626,6 @@
     function processHackSuccess() {
         sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); playSound('win');
         
-        // DIFFICULTY SCALING: Economy Multipliers
         let diffMult = sys.difficulty === 'easy' ? 0.5 : (sys.difficulty === 'hard' ? 1.5 : 1);
         let baseTimePoints = ((Date.now() - sys.startTime) / 1000) < 5 ? 300 : 100; 
         
@@ -882,7 +886,6 @@
     window.cloudSave = async function() {
         if(!db || !currentHackerId || currentHackerId === "GUEST") return;
         
-        // NEW: Difficulty state is now synced to the cloud database
         const data = { 
             topScore: sys.topScore, 
             cores: sys.cores, 
