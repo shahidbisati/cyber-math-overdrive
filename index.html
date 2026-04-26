@@ -150,7 +150,6 @@
     <div style="font-family: 'Orbitron'; font-weight: bold; font-size: 45px; color: var(--neon-cyan); letter-spacing: 5px; margin-bottom: 15px; text-shadow: 0 0 20px var(--neon-cyan);" id="id-modal-text">---</div>
     
     <button class="action-btn" id="copy-id-btn" onclick="copyHackerId()" style="border-color:var(--neon-cyan); color:var(--neon-cyan); width: 80%; max-width: 300px; margin-bottom: 15px;">[ COPY TO CLIPBOARD ]</button>
-    
     <button class="action-btn" onclick="closeIdModal()" style="border-color:var(--neon-green); color:var(--neon-green); width: 80%; max-width: 300px;">[ I WROTE IT DOWN ]</button>
 </div>
 
@@ -252,7 +251,6 @@
         else if (type === 'buy') { osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1600, now+0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
     }
 
-    // --- PRE-FILL SAVED ID & BACKGROUND LOAD ---
     window.addEventListener('load', async () => {
         const savedId = localStorage.getItem('cm_hacker_id');
         if (savedId && savedId !== 'GUEST') {
@@ -277,7 +275,6 @@
         }
     });
 
-    // --- SESSION MANAGERS ---
     window.startNewSession = async function() {
         const msgBox = document.getElementById('auth-msg');
         if(msgBox) msgBox.innerText = "CONNECTING...";
@@ -414,7 +411,6 @@
         updateStoreUI(); playSound('win'); initProtocol();
     }
 
-    // --- BULLETPROOF PHYSICS ENGINE ---
     let draggedBlock = null; let offsetX = 0, offsetY = 0;
     function handlePointerDown(e) {
         if (!sys.active || draggedBlock) return;
@@ -443,6 +439,8 @@
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         draggedBlock.style.left = (clientX - offsetX) + 'px'; draggedBlock.style.top = (clientY - offsetY) + 'px';
     }
+    
+    // --- REVERSE DRAG FIX ---
     function handlePointerUp(e) {
         if (!draggedBlock) return;
         const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
@@ -458,16 +456,16 @@
         const dzRect = dropZone.getBoundingClientRect();
         const isOverDropZone = (clientX >= dzRect.left && clientX <= dzRect.right && clientY >= dzRect.top && clientY <= dzRect.bottom);
 
+        playSound('drop');
         if (isOverDropZone) { 
-            playSound('drop'); 
             dropZone.appendChild(draggedBlock); 
-            validateInput(); 
         } else { 
-            playSound('drop');
-            const originalZone = document.getElementById(draggedBlock.dataset.originalParent); 
-            if (originalZone) originalZone.appendChild(draggedBlock); 
-            validateInput(); 
+            // If pulled outside the drop zone, safely return it to the pool zone every time
+            const poolZone = document.getElementById('pool-zone');
+            if (poolZone) poolZone.appendChild(draggedBlock);
         }
+        
+        validateInput(); 
         draggedBlock = null;
     }
 
@@ -511,14 +509,13 @@
         
         clearInterval(heartbeatInterval); heartbeatInterval = null;
 
-        // --- GENIUS LOGIC: Board & Math Scaling ---
         let blockCount, maxVal, baseDecoyCount;
 
         if (sys.difficulty === 'easy') {
             blockCount = Math.min(2 + Math.floor((sys.level - 1) / 4), 3); 
             maxVal = Math.min(3 + Math.floor((sys.level - 1) / 2), 9);     
-            // ZERO decoys until level 11
-            baseDecoyCount = sys.level > 10 ? 1 : 0; 
+            // ZERO decoys for levels 1 through 5. Starts at Level 6.
+            baseDecoyCount = sys.level > 5 ? 1 : 0; 
         } 
         else if (sys.difficulty === 'hard') {
             blockCount = Math.min(3 + Math.floor((sys.level - 1) / 3), 5); 
@@ -544,7 +541,6 @@
         const targetNum = document.getElementById('target-num');
         if(targetNum) targetNum.innerText = sum;
         
-        // Apply Decoy Deflector Bonus safely
         let deflectorBonus = sys.upgrades.decoyDeflector ? 1 : 0;
         let finalDecoyCount = Math.max(baseDecoyCount - deflectorBonus, 0);
 
