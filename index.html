@@ -58,7 +58,7 @@
         .target-display { text-align: center; margin: 10px 0; }
         #target-num { font-family: 'Orbitron', sans-serif; font-size: 60px; font-weight: 900; color: transparent; -webkit-text-stroke: 2px var(--neon-cyan); text-shadow: 0 0 30px rgba(0, 243, 255, 0.5); display: block; line-height: 1; }
         
-        .drop-zone { min-height: 80px; border: 1px solid rgba(0, 243, 255, 0.3); background: rgba(0, 243, 255, 0.02); margin: 5px 0 10px 0; padding: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; transition: all 0.2s; }
+        .drop-zone { min-height: 140px; border: 1px solid rgba(0, 243, 255, 0.3); background: rgba(0, 243, 255, 0.02); margin: 5px 0 10px 0; padding: 10px; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 8px; transition: all 0.2s; }
         .drop-zone.active { border-color: var(--neon-pink); background: rgba(255, 0, 127, 0.1); }
 
         .block {
@@ -414,6 +414,7 @@
         updateStoreUI(); playSound('win'); initProtocol();
     }
 
+    // --- BULLETPROOF PHYSICS ENGINE ---
     let draggedBlock = null; let offsetX = 0, offsetY = 0;
     function handlePointerDown(e) {
         if (!sys.active || draggedBlock) return;
@@ -446,10 +447,6 @@
         if (!draggedBlock) return;
         const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
         const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-        draggedBlock.style.display = 'none';
-        const elemBelow = document.elementFromPoint(clientX, clientY);
-        draggedBlock.style.display = '';
-        const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
         
         draggedBlock.classList.remove('dragging');
         Object.assign(draggedBlock.style, { position:'', width:'', height:'', left:'', top:'', zIndex:'', margin:'' });
@@ -457,8 +454,20 @@
         const placeholder = document.getElementById('drag-placeholder');
         if (placeholder) placeholder.remove();
 
-        if (dropZone) { playSound('drop'); dropZone.appendChild(draggedBlock); validateInput(); } 
-        else { const originalZone = document.getElementById(draggedBlock.dataset.originalParent); if (originalZone) originalZone.appendChild(draggedBlock); }
+        const dropZone = document.getElementById('drop-zone');
+        const dzRect = dropZone.getBoundingClientRect();
+        const isOverDropZone = (clientX >= dzRect.left && clientX <= dzRect.right && clientY >= dzRect.top && clientY <= dzRect.bottom);
+
+        if (isOverDropZone) { 
+            playSound('drop'); 
+            dropZone.appendChild(draggedBlock); 
+            validateInput(); 
+        } else { 
+            playSound('drop');
+            const originalZone = document.getElementById(draggedBlock.dataset.originalParent); 
+            if (originalZone) originalZone.appendChild(draggedBlock); 
+            validateInput(); 
+        }
         draggedBlock = null;
     }
 
@@ -508,17 +517,20 @@
         if (sys.difficulty === 'easy') {
             blockCount = Math.min(2 + Math.floor((sys.level - 1) / 4), 3); 
             maxVal = Math.min(3 + Math.floor((sys.level - 1) / 2), 9);     
-            baseDecoyCount = Math.min(1 + Math.floor((sys.level - 1) / 3), 2); 
+            // ZERO decoys until level 11
+            baseDecoyCount = sys.level > 10 ? 1 : 0; 
         } 
         else if (sys.difficulty === 'hard') {
             blockCount = Math.min(3 + Math.floor((sys.level - 1) / 3), 5); 
             maxVal = Math.min(8 + Math.floor((sys.level - 1) * 1.5), 25);  
-            baseDecoyCount = Math.min(3 + Math.floor((sys.level - 1) / 2), 5); 
+            // Locks at 2 until level 11, then scales to 5
+            baseDecoyCount = sys.level > 10 ? Math.min(2 + Math.floor((sys.level - 10) / 3), 5) : 2; 
         } 
         else {
             blockCount = Math.min(2 + Math.floor((sys.level - 1) / 3), 4); 
             maxVal = Math.min(5 + (sys.level - 1), 15);                    
-            baseDecoyCount = Math.min(2 + Math.floor((sys.level - 1) / 3), 4); 
+            // Locks at 1 until level 11, then scales to 4
+            baseDecoyCount = sys.level > 10 ? Math.min(1 + Math.floor((sys.level - 10) / 4), 4) : 1; 
         }
 
         let sum = 0; let newBlocks = [];
