@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cyber-Math Overdrive (Full-Stack Edition)</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cyber-Math">
+    <link rel="apple-touch-icon" href="icon.svg">
+    
     <script>
     (adsbygoogle = window.adsbygoogle || []).push({
      params: { tag_for_child_directed_treatment: 1 }
@@ -94,7 +100,6 @@
             to { transform: translateY(-10%) translateX(-10%); }
         }
 
-        /* --- EXISTING CYBER GRID OVERLAY --- */
         .cyber-grid {
             position: absolute; bottom: -50%; left: -50%; width: 200%; height: 200%;
             background-image: 
@@ -152,7 +157,7 @@
 
         #system-msg { text-align: center; font-size: 14px; height: 20px; text-transform: uppercase; font-weight: bold; margin-top: 5px; }
         
-        /* --- VISIBLE HOMEPAGE BACKGROUND FIX --- */
+        /* Start Screen */
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; backdrop-filter: blur(2px); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;}
         
         .login-box { background: rgba(0,0,0,0.85); border: 1px solid var(--neon-cyan); padding: 20px; border-radius: 10px; box-shadow: 0 0 25px rgba(0,243,255,0.3); width: 80%; max-width: 350px;}
@@ -991,6 +996,18 @@
         } catch(e) { console.error("Load failed:", e); }
         return null;
     };
+</script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('sw.js').then(function(registration) {
+                console.log('ServiceWorker registration successful');
+            }, function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+    }
 </script>
 </body>
 </html>
