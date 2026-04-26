@@ -502,33 +502,43 @@
         
         clearInterval(heartbeatInterval); heartbeatInterval = null;
 
-        // --- THE GENIUS LOGIC: Perfect Math Scaling ---
-        let blockCount;
-        if(sys.difficulty === 'easy') blockCount = Math.min(2 + Math.floor(sys.level / 8), 3); 
-        else if(sys.difficulty === 'hard') blockCount = Math.min(3 + Math.floor(sys.level / 3), 6); 
-        else blockCount = Math.min(2 + Math.floor(sys.level / 4), 5);
+        // --- GENIUS LOGIC: Board & Math Scaling ---
+        let blockCount, maxVal, baseDecoyCount;
 
-        let maxVal;
-        if(sys.difficulty === 'easy') maxVal = Math.floor(5 + (sys.level * 1.2)); 
-        else if(sys.difficulty === 'hard') maxVal = Math.floor(15 + (sys.level * 3.5)); 
-        else maxVal = Math.floor(10 + (sys.level * 2));
+        if (sys.difficulty === 'easy') {
+            blockCount = Math.min(2 + Math.floor((sys.level - 1) / 4), 3); 
+            maxVal = Math.min(3 + Math.floor((sys.level - 1) / 2), 9);     
+            baseDecoyCount = Math.min(1 + Math.floor((sys.level - 1) / 3), 2); 
+        } 
+        else if (sys.difficulty === 'hard') {
+            blockCount = Math.min(3 + Math.floor((sys.level - 1) / 3), 5); 
+            maxVal = Math.min(8 + Math.floor((sys.level - 1) * 1.5), 25);  
+            baseDecoyCount = Math.min(3 + Math.floor((sys.level - 1) / 2), 5); 
+        } 
+        else {
+            blockCount = Math.min(2 + Math.floor((sys.level - 1) / 3), 4); 
+            maxVal = Math.min(5 + (sys.level - 1), 15);                    
+            baseDecoyCount = Math.min(2 + Math.floor((sys.level - 1) / 3), 4); 
+        }
 
         let sum = 0; let newBlocks = [];
-        for(let i=0; i<blockCount; i++) { let val = Math.floor(Math.random() * maxVal) + 1; sum += val; newBlocks.push({val: val, isDecoy: false}); }
+        for(let i=0; i<blockCount; i++) { 
+            let val = Math.floor(Math.random() * maxVal) + 1; 
+            sum += val; 
+            newBlocks.push({val: val, isDecoy: false}); 
+        }
         sys.target = sum; 
         
         const targetNum = document.getElementById('target-num');
         if(targetNum) targetNum.innerText = sum;
         
-        // --- THE GENIUS LOGIC: Decoy Scaling ---
-        let decoyCount;
+        // Apply Decoy Deflector Bonus safely
         let deflectorBonus = sys.upgrades.decoyDeflector ? 1 : 0;
-        
-        if(sys.difficulty === 'easy') decoyCount = Math.max(1 - deflectorBonus, 0); 
-        else if(sys.difficulty === 'hard') decoyCount = Math.max(4 - deflectorBonus, 2); 
-        else decoyCount = Math.max(3 - deflectorBonus, 1); 
+        let finalDecoyCount = Math.max(baseDecoyCount - deflectorBonus, 0);
 
-        for(let i=0; i<decoyCount; i++) { newBlocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); }
+        for(let i=0; i<finalDecoyCount; i++) { 
+            newBlocks.push({val: Math.floor(Math.random() * maxVal) + 1, isDecoy: true}); 
+        }
         newBlocks.sort(() => Math.random() - 0.5);
 
         if(poolZone) {
@@ -556,9 +566,9 @@
         clearInterval(sys.timerInterval);
         if (!isResume) {
             let calculatedTime;
-            if(sys.difficulty === 'easy') calculatedTime = Math.max(20, 45 - sys.level); 
-            else if(sys.difficulty === 'hard') calculatedTime = Math.max(7, 20 - sys.level); 
-            else calculatedTime = Math.max(10, 30 - Math.floor(sys.level * 1.5));
+            if(sys.difficulty === 'easy') calculatedTime = Math.max(15, 30 - Math.floor((sys.level - 1) / 2)); 
+            else if(sys.difficulty === 'hard') calculatedTime = Math.max(8, 25 - (sys.level - 1)); 
+            else calculatedTime = Math.max(10, 30 - Math.floor((sys.level - 1) * 1.5));
 
             if(sys.upgrades.timeDilator) calculatedTime += 3.0;
             sys.time = calculatedTime;
