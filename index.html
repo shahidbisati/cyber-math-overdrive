@@ -124,6 +124,9 @@
         <form onsubmit="event.preventDefault(); loadHackerId();" style="width: 100%;">
             <p style="font-size:12px; color:#888; margin-top:0;">ENTER HACKER ID TO RESUME</p>
             <input type="text" id="hacker-id-input" name="username" autocomplete="username" class="hacker-input" placeholder="e.g. X7K9P2" maxlength="6">
+            
+            <input type="password" name="password" autocomplete="current-password" value="CyberMath123" style="position: absolute; left: -9999px;" tabindex="-1">
+            
             <button type="submit" class="start-btn">RESUME SESSION</button>
         </form>
         
@@ -141,7 +144,7 @@
 
 <div id="id-modal" class="overlay" style="justify-content:center; padding: 20px; z-index: 150; background: rgba(5, 5, 16, 0.99);">
     <h2 style="color: var(--neon-green); font-family: 'Orbitron'; font-size:24px; text-align:center; text-shadow: 0 0 10px var(--neon-green);">ID GENERATED</h2>
-    <p style="margin-bottom: 20px; font-size:14px; text-align:center; color: #fff;">This is your secure Hacker ID.<br>Write it down to resume your game on any device!</p>
+    <p style="margin-bottom: 20px; font-size:14px; text-align:center; color: #fff;">This is your secure Hacker ID.<br>Write it down or save it to your browser!</p>
     <div style="font-family: 'Orbitron'; font-weight: bold; font-size: 45px; color: var(--neon-cyan); letter-spacing: 5px; margin-bottom: 30px; text-shadow: 0 0 20px var(--neon-cyan);" id="id-modal-text">---</div>
     <button class="action-btn" onclick="closeIdModal()" style="border-color:var(--neon-green); color:var(--neon-green); width: 80%; max-width: 300px;">[ I WROTE IT DOWN ]</button>
 </div>
@@ -251,6 +254,16 @@
         }
     });
 
+    // Helper function to force browser password save prompt
+    function triggerCredentialPrompt(hackerId) {
+        try {
+            if (window.PasswordCredential && navigator.credentials) {
+                const cred = new PasswordCredential({ id: hackerId, password: 'CyberMath123', name: 'Cyber-Math Hacker' });
+                navigator.credentials.store(cred);
+            }
+        } catch(e) {}
+    }
+
     // --- SESSION MANAGERS ---
     window.startNewSession = async function() {
         const msgBox = document.getElementById('auth-msg');
@@ -260,9 +273,11 @@
         
         currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
         if(msgBox) msgBox.innerText = "GENERATING ID...";
+        
         await window.cloudSave();
         
         localStorage.setItem('cm_hacker_id', currentHackerId);
+        triggerCredentialPrompt(currentHackerId);
         
         const startScreen = document.getElementById('start-screen');
         if(startScreen) startScreen.style.display = 'none';
@@ -295,12 +310,17 @@
         if(msgBox) msgBox.innerText = "SEARCHING...";
         const data = await window.cloudLoad(input);
         if(data) {
-            sys.topScore = data.topScore || 0; sys.cores = data.cores || 0;
+            sys.topScore = data.topScore || 0; 
+            sys.cores = data.cores || 0;
+            // RESTORE LEVEL MEMORY FROM DATABASE
+            sys.level = data.level || 1;
             sys.unlockedThemes = data.unlockedThemes || [];
             sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
             currentHackerId = input;
             
             localStorage.setItem('cm_hacker_id', currentHackerId);
+            triggerCredentialPrompt(currentHackerId);
+            
             startGameUI();
         } else {
             if(msgBox) msgBox.innerText = "HACKER ID NOT FOUND";
@@ -335,6 +355,9 @@
         
         const idDisplay = document.getElementById('display-hacker-id');
         if(idDisplay) idDisplay.innerText = currentHackerId;
+        
+        const levelTxt = document.getElementById('level-txt');
+        if(levelTxt) levelTxt.innerText = sys.level; 
         
         const topScoreTxt = document.getElementById('top-score-txt');
         if(topScoreTxt) topScoreTxt.innerText = sys.topScore;
@@ -541,10 +564,8 @@
         let basePoints = 100; if(((Date.now() - sys.startTime) / 1000) < 5) basePoints = 300; 
         let earnedPoints = basePoints * sys.combo;
         
-        // ECONOMY BUFF: +10 base cores guaranteed, plus the combo scale
         let earnedCores = 10 + Math.floor(sys.level * sys.combo * 2); 
 
-        // OVERCLOCKED BUFF: Now applies the 20% bonus to BOTH Score and Cores
         if(sys.upgrades.overclocked) {
             earnedPoints = Math.floor(earnedPoints * 1.2);
             earnedCores = Math.floor(earnedCores * 1.2);
@@ -667,13 +688,13 @@
             sys.topScore = sys.score; 
             const topScoreTxt = document.getElementById('top-score-txt');
             if(topScoreTxt) topScoreTxt.innerText = sys.topScore; 
-            window.cloudSave(); 
         }
         
         const sysMsg = document.getElementById('system-msg');
         if(sysMsg) { sysMsg.innerText = "COMBO LOST. RESETTING."; sysMsg.style.color = "var(--neon-pink)"; }
         
         sys.level = 1; sys.score = 0; sys.combo = 1; 
+        window.cloudSave(); 
         
         setTimeout(() => { 
             const scoreTxt = document.getElementById('score-txt');
@@ -793,7 +814,14 @@
 
     window.cloudSave = async function() {
         if(!db || !currentHackerId || currentHackerId === "GUEST") return;
-        const data = { topScore: sys.topScore, cores: sys.cores, unlockedThemes: sys.unlockedThemes, upgrades: sys.upgrades };
+        // BUG FIX: Now explicitly saving the 'sys.level' into the database!
+        const data = { 
+            topScore: sys.topScore, 
+            cores: sys.cores, 
+            level: sys.level, 
+            unlockedThemes: sys.unlockedThemes, 
+            upgrades: sys.upgrades 
+        };
         try { await setDoc(doc(db, "players", currentHackerId), data); } catch(e) { console.error("Save failed:", e); }
     };
 
