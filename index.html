@@ -75,6 +75,9 @@
         .action-btn { background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan); padding: 8px 10px; font-family: 'Share Tech Mono', monospace; font-size: 14px; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.3s; }
         .action-btn:hover:not(:disabled) { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
         .action-btn:disabled { border-color: #444; color: #444; cursor: not-allowed; }
+        
+        .logout-btn { background: transparent; border: 1px solid var(--neon-pink); color: var(--neon-pink); cursor: pointer; font-family: 'Share Tech Mono'; font-size: 10px; padding: 3px 6px; border-radius: 3px; transition: 0.2s; }
+        .logout-btn:hover { background: var(--neon-pink); color: black; box-shadow: 0 0 10px var(--neon-pink); }
 
         @keyframes glitch { 0% { transform: translate(0); } 20% { transform: translate(-5px, 5px); filter: hue-rotate(90deg) invert(1); } 40% { transform: translate(5px, -5px); } 60% { transform: translate(-2px, 2px); filter: hue-rotate(180deg) invert(1); } 100% { transform: translate(0); } }
         .glitch-effect { animation: glitch 0.3s ease-in-out; }
@@ -117,9 +120,12 @@
 <div id="start-screen">
     <h1 style="font-size: 30px; margin-bottom: 20px; text-shadow: 0 0 20px var(--neon-cyan); text-align:center;">Cyber-Math<br>Overdrive</h1>
     <div class="login-box">
-        <p style="font-size:12px; color:#888; margin-top:0;">ENTER HACKER ID TO RESUME</p>
-        <input type="text" id="hacker-id-input" class="hacker-input" placeholder="e.g. X7K9P2" maxlength="6" autocomplete="off">
-        <button class="start-btn" onclick="loadHackerId()">RESUME SESSION</button>
+        
+        <form onsubmit="event.preventDefault(); loadHackerId();" style="width: 100%;">
+            <p style="font-size:12px; color:#888; margin-top:0;">ENTER HACKER ID TO RESUME</p>
+            <input type="text" id="hacker-id-input" name="username" autocomplete="username" class="hacker-input" placeholder="e.g. X7K9P2" maxlength="6">
+            <button type="submit" class="start-btn">RESUME SESSION</button>
+        </form>
         
         <div style="margin: 15px 0; border-bottom: 1px solid #444;"></div>
         
@@ -144,7 +150,10 @@
     <div class="header-system">
         <div>
             <h1>Node <span id="level-txt">1</span></h1>
-            <div class="stat-box" style="color: #fff">ID: <span id="display-hacker-id" style="color:var(--neon-cyan); font-weight:bold;">---</span></div>
+            <div class="stat-box" style="color: #fff; display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <span>ID: <span id="display-hacker-id" style="color:var(--neon-cyan); font-weight:bold;">---</span></span>
+                <button class="logout-btn" onclick="logoutSession()">[ LOGOUT ]</button>
+            </div>
         </div>
         <div style="text-align: right;">
             <div class="stat-box">Score: <span id="score-txt">0</span></div>
@@ -201,8 +210,6 @@
         <div class="store-item"><div><strong style="color: #ff007f; font-size:14px;">Spellbreaker</strong><br><span style="font-size: 10px; color: #888;">Exposes one decoy.</span></div><button class="buy-btn" id="buy-upg-spell" onclick="purchaseUpgrade('spellbreaker', 5000)">5000</button></div>
         <div class="store-item"><div><strong style="color: #39ff14; font-size:14px;">Decoy Deflector</strong><br><span style="font-size: 10px; color: #888;">Spawns 1 less decoy.</span></div><button class="buy-btn" id="buy-upg-decoy" onclick="purchaseUpgrade('decoyDeflector', 7500)">7500</button></div>
         <div class="store-item"><div><strong style="color: #f1c40f; font-size:14px;">Overclocked Core</strong><br><span style="font-size: 10px; color: #888;">+20% Score on win.</span></div><button class="buy-btn" id="buy-upg-overclock" onclick="purchaseUpgrade('overclocked', 10000)">10000</button></div>
-
-        <button class="action-btn" onclick="logoutSession()" style="margin-top: 25px; width: 100%; border-color: var(--neon-pink); color: var(--neon-pink);">[ DISCONNECT ACCOUNT ]</button>
     </div>
 </div>
 
@@ -233,31 +240,14 @@
         else if (type === 'buy') { osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1600, now+0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
     }
 
-    // --- AUTO-RESUME ENGINE ---
-    window.addEventListener('load', async () => {
+    // --- PRE-FILL SAVED ID ---
+    window.addEventListener('load', () => {
         const savedId = localStorage.getItem('cm_hacker_id');
-        if (savedId === 'GUEST') {
-            startGuestSession();
-        } else if (savedId && savedId.length === 6) {
+        if (savedId && savedId !== 'GUEST') {
+            const inputEl = document.getElementById('hacker-id-input');
+            if(inputEl) inputEl.value = savedId;
             const msgBox = document.getElementById('auth-msg');
-            if(msgBox) msgBox.innerText = "AUTO-RESUMING SESSION...";
-            
-            const connected = await window.cloudConnect();
-            if (connected) {
-                const data = await window.cloudLoad(savedId);
-                if (data) {
-                    sys.topScore = data.topScore || 0; sys.cores = data.cores || 0;
-                    sys.unlockedThemes = data.unlockedThemes || [];
-                    sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
-                    currentHackerId = savedId;
-                    startGameUI();
-                } else {
-                    localStorage.removeItem('cm_hacker_id');
-                    if(msgBox) msgBox.innerText = "SAVED ID NOT FOUND IN DATABASE.";
-                }
-            } else {
-                if(msgBox) msgBox.innerText = "OFFLINE. PLAY AS GUEST?";
-            }
+            if(msgBox) msgBox.innerText = "SAVED ID FOUND. CLICK RESUME.";
         }
     });
 
@@ -272,17 +262,21 @@
         if(msgBox) msgBox.innerText = "GENERATING ID...";
         await window.cloudSave();
         
-        // Save to browser memory
         localStorage.setItem('cm_hacker_id', currentHackerId);
         
-        // Trigger the ID Modal
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('id-modal-text').innerText = currentHackerId;
-        document.getElementById('id-modal').style.display = 'flex';
+        const startScreen = document.getElementById('start-screen');
+        if(startScreen) startScreen.style.display = 'none';
+        
+        const modalText = document.getElementById('id-modal-text');
+        if(modalText) modalText.innerText = currentHackerId;
+        
+        const idModal = document.getElementById('id-modal');
+        if(idModal) idModal.style.display = 'flex';
     };
 
     window.closeIdModal = function() {
-        document.getElementById('id-modal').style.display = 'none';
+        const idModal = document.getElementById('id-modal');
+        if(idModal) idModal.style.display = 'none';
         startGameUI();
     };
 
@@ -306,7 +300,6 @@
             sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
             currentHackerId = input;
             
-            // Save to browser memory
             localStorage.setItem('cm_hacker_id', currentHackerId);
             startGameUI();
         } else {
@@ -328,7 +321,7 @@
 
     window.logoutSession = function() {
         localStorage.removeItem('cm_hacker_id');
-        location.reload(); // Instantly refresh the page to clear the engine memory
+        location.reload(); 
     };
 
     function startGameUI() {
@@ -355,7 +348,6 @@
         updateStoreUI(); playSound('win'); initProtocol();
     }
 
-    // --- GAME ENGINE ---
     let draggedBlock = null; let offsetX = 0, offsetY = 0;
     function handlePointerDown(e) {
         if (!sys.active || draggedBlock) return;
