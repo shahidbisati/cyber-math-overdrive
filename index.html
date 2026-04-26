@@ -133,6 +133,13 @@
     </div>
 </div>
 
+<div id="id-modal" class="overlay" style="justify-content:center; padding: 20px; z-index: 150; background: rgba(5, 5, 16, 0.99);">
+    <h2 style="color: var(--neon-green); font-family: 'Orbitron'; font-size:24px; text-align:center; text-shadow: 0 0 10px var(--neon-green);">ID GENERATED</h2>
+    <p style="margin-bottom: 20px; font-size:14px; text-align:center; color: #fff;">This is your secure Hacker ID.<br>Write it down to resume your game on any device!</p>
+    <div style="font-family: 'Orbitron'; font-weight: bold; font-size: 45px; color: var(--neon-cyan); letter-spacing: 5px; margin-bottom: 30px; text-shadow: 0 0 20px var(--neon-cyan);" id="id-modal-text">---</div>
+    <button class="action-btn" onclick="closeIdModal()" style="border-color:var(--neon-green); color:var(--neon-green); width: 80%; max-width: 300px;">[ I WROTE IT DOWN ]</button>
+</div>
+
 <div id="hud-container">
     <div class="header-system">
         <div>
@@ -194,11 +201,12 @@
         <div class="store-item"><div><strong style="color: #ff007f; font-size:14px;">Spellbreaker</strong><br><span style="font-size: 10px; color: #888;">Exposes one decoy.</span></div><button class="buy-btn" id="buy-upg-spell" onclick="purchaseUpgrade('spellbreaker', 5000)">5000</button></div>
         <div class="store-item"><div><strong style="color: #39ff14; font-size:14px;">Decoy Deflector</strong><br><span style="font-size: 10px; color: #888;">Spawns 1 less decoy.</span></div><button class="buy-btn" id="buy-upg-decoy" onclick="purchaseUpgrade('decoyDeflector', 7500)">7500</button></div>
         <div class="store-item"><div><strong style="color: #f1c40f; font-size:14px;">Overclocked Core</strong><br><span style="font-size: 10px; color: #888;">+20% Score on win.</span></div><button class="buy-btn" id="buy-upg-overclock" onclick="purchaseUpgrade('overclocked', 10000)">10000</button></div>
+
+        <button class="action-btn" onclick="logoutSession()" style="margin-top: 25px; width: 100%; border-color: var(--neon-pink); color: var(--neon-pink);">[ DISCONNECT ACCOUNT ]</button>
     </div>
 </div>
 
 <script>
-    // --- GAME STATE ---
     let currentHackerId = "";
     let sys = { 
         level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
@@ -207,12 +215,10 @@
         upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
     };
 
-    // --- DUMMY CLOUD INTERFACE ---
     window.cloudConnect = async function() { return false; };
     window.cloudSave = async function() {};
     window.cloudLoad = async function(id) { return null; };
 
-    // --- AUDIO ENGINE ---
     let audioCtx; let heartbeatInterval = null;
     function playSound(type) {
         if (!audioCtx || audioCtx.state === 'suspended') return;
@@ -227,8 +233,36 @@
         else if (type === 'buy') { osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1600, now+0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
     }
 
+    // --- AUTO-RESUME ENGINE ---
+    window.addEventListener('load', async () => {
+        const savedId = localStorage.getItem('cm_hacker_id');
+        if (savedId === 'GUEST') {
+            startGuestSession();
+        } else if (savedId && savedId.length === 6) {
+            const msgBox = document.getElementById('auth-msg');
+            if(msgBox) msgBox.innerText = "AUTO-RESUMING SESSION...";
+            
+            const connected = await window.cloudConnect();
+            if (connected) {
+                const data = await window.cloudLoad(savedId);
+                if (data) {
+                    sys.topScore = data.topScore || 0; sys.cores = data.cores || 0;
+                    sys.unlockedThemes = data.unlockedThemes || [];
+                    sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
+                    currentHackerId = savedId;
+                    startGameUI();
+                } else {
+                    localStorage.removeItem('cm_hacker_id');
+                    if(msgBox) msgBox.innerText = "SAVED ID NOT FOUND IN DATABASE.";
+                }
+            } else {
+                if(msgBox) msgBox.innerText = "OFFLINE. PLAY AS GUEST?";
+            }
+        }
+    });
+
     // --- SESSION MANAGERS ---
-    async function startNewSession() {
+    window.startNewSession = async function() {
         const msgBox = document.getElementById('auth-msg');
         if(msgBox) msgBox.innerText = "CONNECTING...";
         const connected = await window.cloudConnect();
@@ -237,10 +271,22 @@
         currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
         if(msgBox) msgBox.innerText = "GENERATING ID...";
         await window.cloudSave();
-        startGameUI();
-    }
+        
+        // Save to browser memory
+        localStorage.setItem('cm_hacker_id', currentHackerId);
+        
+        // Trigger the ID Modal
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('id-modal-text').innerText = currentHackerId;
+        document.getElementById('id-modal').style.display = 'flex';
+    };
 
-    async function loadHackerId() {
+    window.closeIdModal = function() {
+        document.getElementById('id-modal').style.display = 'none';
+        startGameUI();
+    };
+
+    window.loadHackerId = async function() {
         const inputEl = document.getElementById('hacker-id-input');
         if(!inputEl) return;
         const input = inputEl.value.trim().toUpperCase();
@@ -259,13 +305,16 @@
             sys.unlockedThemes = data.unlockedThemes || [];
             sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
             currentHackerId = input;
+            
+            // Save to browser memory
+            localStorage.setItem('cm_hacker_id', currentHackerId);
             startGameUI();
         } else {
             if(msgBox) msgBox.innerText = "HACKER ID NOT FOUND";
         }
-    }
+    };
 
-    function startGuestSession() {
+    window.startGuestSession = function() {
         currentHackerId = "GUEST";
         sys = { 
             level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
@@ -273,13 +322,18 @@
             combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
             upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
         };
+        localStorage.setItem('cm_hacker_id', 'GUEST');
         startGameUI();
-    }
+    };
+
+    window.logoutSession = function() {
+        localStorage.removeItem('cm_hacker_id');
+        location.reload(); // Instantly refresh the page to clear the engine memory
+    };
 
     function startGameUI() {
         try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
         
-        // DEFENSIVE PROGRAMMING: These 'if' statements guarantee the script won't crash if HTML is missing
         const startScreen = document.getElementById('start-screen');
         if(startScreen) startScreen.style.display = 'none';
         
@@ -441,12 +495,12 @@
                 }
                 if(sys.time <= 0) { timerUI.innerText = "0.0"; offerAdRescue(); }
             } else if (sys.time <= 0) {
-                offerAdRescue(); // Fallback if UI is missing
+                offerAdRescue();
             }
         }, 100);
     }
 
-    function triggerEMP() {
+    window.triggerEMP = function() {
         if(!sys.active) return;
         if(!sys.empAvailable) { offerAdEMP(); return; }
         
@@ -467,7 +521,7 @@
             const sysMsg = document.getElementById('system-msg');
             if(sysMsg) sysMsg.innerText = "NO DECOYS DETECTED"; 
         }
-    }
+    };
 
     function validateInput() {
         const dropZone = document.getElementById('drop-zone'); 
@@ -558,7 +612,7 @@
         if(adOverlay) adOverlay.style.display = 'flex';
     }
 
-    function triggerAdNetwork() {
+    window.triggerAdNetwork = function() {
         const watchAdBtn = document.getElementById('watch-ad-btn');
         if(watchAdBtn) watchAdBtn.style.display = 'none'; 
         
@@ -575,7 +629,7 @@
             if(progBar) progBar.style.width = progress + '%'; 
             if(progress >= 100) { clearInterval(adTimer); grantAdReward(); } 
         }, 150); 
-    }
+    };
 
     function grantAdReward() {
         playSound('win'); 
@@ -596,16 +650,16 @@
         }
     }
 
-    function cancelAd() {
+    window.cancelAd = function() {
         if (sys.adRewardType === 'rescue') { executeGameLoss(); } 
         else { 
             const adOverlay = document.getElementById('ad-overlay');
             if(adOverlay) adOverlay.style.display = 'none'; 
             sys.active = true; startClock(true); 
         }
-    }
+    };
 
-    function executeGameLoss() {
+    window.executeGameLoss = function() {
         const adOverlay = document.getElementById('ad-overlay');
         if(adOverlay) adOverlay.style.display = 'none'; 
         
@@ -627,9 +681,9 @@
             if(scoreTxt) scoreTxt.innerText = sys.score; 
             initProtocol(); 
         }, 2000);
-    }
+    };
 
-    function openStore() {
+    window.openStore = function() {
         if(!sys.active) return; sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval);
         
         const storeBalance = document.getElementById('store-core-balance');
@@ -639,15 +693,15 @@
         
         const storeOverlay = document.getElementById('store-overlay');
         if(storeOverlay) storeOverlay.style.display = 'flex';
-    }
+    };
 
-    function closeStore() { 
+    window.closeStore = function() { 
         const storeOverlay = document.getElementById('store-overlay');
         if(storeOverlay) storeOverlay.style.display = 'none'; 
         sys.active = true; startClock(true); 
-    }
+    };
 
-    function purchaseTheme(themeName, cost) {
+    window.purchaseTheme = function(themeName, cost) {
         if(sys.cores >= cost && !sys.unlockedThemes.includes(themeName)) {
             playSound('buy'); sys.cores -= cost; sys.unlockedThemes.push(themeName); window.cloudSave();
             
@@ -659,7 +713,7 @@
             
             applyTheme(themeName); updateStoreUI();
         } else { playSound('error'); }
-    }
+    };
 
     function applyTheme(themeName) {
         const root = document.documentElement;
@@ -671,7 +725,7 @@
         else { root.style.setProperty('--block-border', 'var(--neon-cyan)'); root.style.setProperty('--block-bg', 'rgba(0, 0, 0, 0.8)'); }
     }
 
-    function purchaseUpgrade(upgradeId, cost) {
+    window.purchaseUpgrade = function(upgradeId, cost) {
         if(sys.cores >= cost && !sys.upgrades[upgradeId]) {
             playSound('buy'); sys.cores -= cost; sys.upgrades[upgradeId] = true; window.cloudSave();
             
@@ -683,7 +737,7 @@
             
             updateStoreUI();
         } else { playSound('error'); }
-    }
+    };
 
     function updateStoreUI() {
         if (!sys.upgrades) sys.upgrades = { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false };
