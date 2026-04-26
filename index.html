@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cyber-Math Overdrive</title>
+    <title>Cyber-Math Overdrive (Full-Stack Edition)</title>
     
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Cyber-Math">
-    <link rel="apple-touch-icon" href="icon.svg">
+    <script>
+    (adsbygoogle = window.adsbygoogle || []).push({
+     params: { tag_for_child_directed_treatment: 1 }
+     });
+    </script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9463288908257202" crossorigin="anonymous"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -18,348 +19,1042 @@
         :root {
             --neon-cyan: #00f3ff; --neon-pink: #ff007f; --neon-green: #39ff14;
             --dark-bg: #050510; --grid-color: rgba(0, 243, 255, 0.15);
-            --block-bg: rgba(0, 0, 0, 0.9); --block-border: #00f3ff;
+            --block-bg: rgba(0, 0, 0, 0.8); --block-border: #00f3ff;
         }
 
         body {
             font-family: 'Share Tech Mono', monospace; background-color: var(--dark-bg);
             margin: 0; display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; color: var(--neon-cyan); overflow: hidden;
-            touch-action: none; -webkit-tap-highlight-color: transparent;
+            min-height: 100vh; color: var(--neon-cyan); overflow: hidden; perspective: 1000px;
+            touch-action: none; 
         }
 
-        /* Hardware Accelerated Galaxy Background */
+        /* --- DENSE GALAXY BACKGROUND ENGINE --- */
         .galaxy-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 20% 30%, rgba(45, 10, 89, 0.8) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 70%, rgba(10, 50, 89, 0.8) 0%, transparent 50%),
-                        var(--dark-bg);
-            z-index: -10; transform: translate3d(0,0,0);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(45, 10, 89, 0.8) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(10, 50, 89, 0.8) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(89, 10, 50, 0.5) 0%, transparent 60%),
+                var(--dark-bg);
+            z-index: -2;
+            overflow: hidden;
         }
 
-        .stars { 
-            position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; 
-            background-image: radial-gradient(2px 2px at 20px 30px, #fff, transparent), 
-                              radial-gradient(2px 2px at 150px 40px, rgba(255,255,255,0.6), transparent);
-            background-size: 250px 250px; animation: drift 120s linear infinite; 
-            pointer-events: none; will-change: transform;
+        .stars, .stars-2, .stars-3 {
+            position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background-repeat: repeat;
         }
 
+        .stars {
+            background-image: 
+                radial-gradient(1.5px 1.5px at 20px 30px, #ffffff, transparent),
+                radial-gradient(1.5px 1.5px at 80px 120px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1.5px 1.5px at 150px 40px, rgba(255,255,255,0.6), transparent),
+                radial-gradient(2px 2px at 220px 180px, #ffffff, transparent),
+                radial-gradient(1px 1px at 40px 180px, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1.5px 1.5px at 120px 70px, rgba(255,255,255,0.7), transparent),
+                radial-gradient(2px 2px at 190px 220px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 240px 90px, #ffffff, transparent);
+            background-size: 250px 250px;
+            animation: stardrift 100s linear infinite;
+        }
+
+        .stars-2 {
+            background-image: 
+                radial-gradient(1px 1px at 50px 160px, rgba(255,255,255,0.9), transparent),
+                radial-gradient(1px 1px at 130px 210px, rgba(255,255,255,0.7), transparent),
+                radial-gradient(1.5px 1.5px at 200px 90px, rgba(255,255,255,0.5), transparent),
+                radial-gradient(1px 1px at 280px 30px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 20px 80px, rgba(255,255,255,0.6), transparent),
+                radial-gradient(1px 1px at 90px 280px, rgba(255,255,255,0.7), transparent),
+                radial-gradient(1.5px 1.5px at 250px 190px, rgba(255,255,255,0.4), transparent),
+                radial-gradient(1px 1px at 320px 250px, rgba(255,255,255,0.8), transparent),
+                radial-gradient(1px 1px at 160px 320px, rgba(255,255,255,0.5), transparent);
+            background-size: 350px 350px;
+            animation: stardrift 150s linear infinite;
+            opacity: 0.7;
+        }
+        
+        .stars-3 {
+            background-image: 
+                radial-gradient(2px 2px at 10px 10px, var(--neon-cyan), transparent),
+                radial-gradient(2px 2px at 180px 180px, var(--neon-pink), transparent),
+                radial-gradient(1.5px 1.5px at 90px 300px, var(--neon-green), transparent),
+                radial-gradient(2px 2px at 280px 80px, var(--neon-cyan), transparent),
+                radial-gradient(1.5px 1.5px at 350px 250px, var(--neon-pink), transparent),
+                radial-gradient(1.5px 1.5px at 50px 120px, rgba(255,255,255,0.8), transparent);
+            background-size: 400px 400px;
+            animation: stardrift 200s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes stardrift {
+            from { transform: translateY(0) translateX(0); }
+            to { transform: translateY(-10%) translateX(-10%); }
+        }
+
+        /* --- EXISTING CYBER GRID OVERLAY --- */
         .cyber-grid {
-            position: fixed; bottom: -50%; left: -50%; width: 200%; height: 200%;
-            background-image: linear-gradient(transparent 64%, var(--grid-color) 65%, var(--grid-color) 67%, transparent 68%), 
-                              linear-gradient(90deg, transparent 64%, var(--grid-color) 65%, var(--grid-color) 67%, transparent 68%);
-            background-size: 60px 60px; transform: rotateX(60deg) translate3d(0,0,0); 
-            animation: gridMove 4s linear infinite; z-index: -5; pointer-events: none;
-            will-change: transform;
+            position: absolute; bottom: -50%; left: -50%; width: 200%; height: 200%;
+            background-image: 
+                linear-gradient(transparent 65%, var(--grid-color) 66%, transparent 68%),
+                linear-gradient(90deg, transparent 65%, var(--grid-color) 66%, transparent 68%);
+            background-size: 50px 50px; transform: rotateX(60deg); animation: gridMove 3s linear infinite; z-index: -1;
         }
 
-        @keyframes drift { from { transform: translate3d(0,0,0); } to { transform: translate3d(-5%, -5%, 0); } }
-        @keyframes gridMove { from { transform: rotateX(60deg) translate3d(0,0,0); } to { transform: rotateX(60deg) translate3d(0, 60px, 0); } }
+        @keyframes gridMove { 0% { transform: rotateX(60deg) translateY(0); } 100% { transform: rotateX(60deg) translateY(50px); } }
 
         #hud-container {
-            width: 92%; max-width: 500px; position: relative; z-index: 10;
-            background: rgba(5, 5, 16, 0.9); border: 2px solid var(--neon-cyan);
-            border-radius: 12px; padding: 20px; box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
-            opacity: 0; transition: opacity 0.5s;
+            width: 95%; max-width: 550px; box-sizing: border-box;
+            background: rgba(5, 5, 16, 0.85); border: 2px solid var(--neon-cyan);
+            border-radius: 10px; padding: 15px 20px; box-shadow: 0 0 20px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.1);
+            position: relative; backdrop-filter: blur(5px); opacity: 0; transition: opacity 0.5s;
         }
 
-        .action-btn { 
-            background: rgba(0,0,0,0.5); color: var(--neon-cyan); border: 2px solid var(--neon-cyan); 
-            padding: 12px; font-family: 'Share Tech Mono'; cursor: pointer; text-transform: uppercase; 
-            width: 100%; border-radius: 6px; font-weight: bold;
-        }
-
-        .drop-zone { min-height: 110px; border: 1px dashed rgba(0, 243, 255, 0.4); background: rgba(0, 243, 255, 0.05); margin: 15px 0; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 10px; border-radius: 8px; }
+        .header-system { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(0, 243, 255, 0.3); padding-bottom: 10px; }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 16px; margin: 0; text-transform: uppercase; text-shadow: 0 0 10px var(--neon-cyan); }
+        .stat-box { font-size: 12px; }
+        #timer { color: var(--neon-pink); font-size: 24px; font-weight: bold; text-shadow: 0 0 10px var(--neon-pink); transition: 0.1s; }
         
+        .currency-bar { display: flex; justify-content: space-between; background: rgba(0,0,0,0.5); padding: 8px 10px; border-radius: 5px; margin-bottom: 10px; border: 1px solid #444; }
+        .data-cores { color: #f1c40f; font-weight: bold; font-size: 14px; text-shadow: 0 0 10px #f1c40f; }
+        .combo-meter { color: var(--neon-pink); font-weight: bold; font-size: 14px; text-shadow: 0 0 10px var(--neon-pink); }
+
+        .target-display { text-align: center; margin: 10px 0; }
+        #target-num { font-family: 'Orbitron', sans-serif; font-size: 60px; font-weight: 900; color: transparent; -webkit-text-stroke: 2px var(--neon-cyan); text-shadow: 0 0 30px rgba(0, 243, 255, 0.5); display: block; line-height: 1; transition: 0.3s; }
+        
+        .drop-zone { min-height: 140px; border: 1px solid rgba(0, 243, 255, 0.3); background: rgba(0, 243, 255, 0.02); margin: 5px 0 10px 0; padding: 10px; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 8px; transition: all 0.2s; }
+        .drop-zone.active { border-color: var(--neon-pink); background: rgba(255, 0, 127, 0.1); }
+
         .block {
-            width: 58px; height: 58px; background: var(--block-bg); border: 2px solid var(--block-border); color: var(--block-border);
-            font-family: 'Orbitron'; font-size: 22px; font-weight: 700; display: flex; justify-content: center; align-items: center; 
-            border-radius: 10px; user-select: none; touch-action: none; cursor: grab;
+            width: 55px; height: 55px; background: var(--block-bg); border: 2px solid var(--block-border); color: var(--block-border);
+            font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: bold; display: flex; justify-content: center; align-items: center; 
+            cursor: grab; text-shadow: 0 0 5px var(--block-border); transition: transform 0.1s;
+            user-select: none; -webkit-user-select: none; touch-action: none; border-radius: 8px;
         }
-        .block.dragging { opacity: 0.6; z-index: 9999 !important; transform: scale(1.1); pointer-events: none; }
+        
+        .block.dragging { opacity: 0.8; z-index: 9999; cursor: grabbing; box-shadow: 0 0 20px var(--block-border); transform: scale(1.1); pointer-events: none; }
+        .spell-broken { opacity: 0.4; border-style: dashed; filter: grayscale(100%); }
 
-        #target-num { font-family: 'Orbitron'; font-size: 70px; color: var(--neon-cyan); text-align: center; display: block; margin: 10px 0; text-shadow: 0 0 25px rgba(0, 243, 255, 0.6); font-weight: 900; }
+        .btn-row { display: flex; justify-content: space-between; margin-bottom: 5px; gap: 10px; }
+        .action-btn { background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan); padding: 8px 10px; font-family: 'Share Tech Mono', monospace; font-size: 14px; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.3s; }
+        .action-btn:hover:not(:disabled) { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+        .action-btn:disabled { border-color: #444; color: #444; cursor: not-allowed; }
+        
+        .logout-btn { background: transparent; border: 1px solid var(--neon-pink); color: var(--neon-pink); cursor: pointer; font-family: 'Share Tech Mono'; font-size: 10px; padding: 3px 6px; border-radius: 3px; transition: 0.2s; }
+        .logout-btn:hover { background: var(--neon-pink); color: black; box-shadow: 0 0 10px var(--neon-pink); }
 
-        #start-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-        .login-box { background: rgba(5, 5, 16, 0.95); border: 2px solid var(--neon-cyan); padding: 30px; border-radius: 15px; width: 300px; text-align: center; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 16, 0.98); z-index: 200; display: none; flex-direction: column; align-items: center; padding: 40px 20px; box-sizing: border-box; }
+        @keyframes glitch { 0% { transform: translate(0); } 20% { transform: translate(-5px, 5px); filter: hue-rotate(90deg) invert(1); } 40% { transform: translate(5px, -5px); } 60% { transform: translate(-2px, 2px); filter: hue-rotate(180deg) invert(1); } 100% { transform: translate(0); } }
+        .glitch-effect { animation: glitch 0.3s ease-in-out; }
+        @keyframes heartbeat { 0% { transform: scale(1); color: var(--neon-pink); } 50% { transform: scale(1.2); color: red; text-shadow: 0 0 20px red; } 100% { transform: scale(1); color: var(--neon-pink); } }
+        .danger-time { animation: heartbeat 0.5s infinite; }
+
+        #system-msg { text-align: center; font-size: 14px; height: 20px; text-transform: uppercase; font-weight: bold; margin-top: 5px; transition: 0.3s; }
+        
+        /* Start Screen Background Transparency Fix */
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; backdrop-filter: blur(2px); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;}
+        
+        .login-box { background: rgba(0,0,0,0.85); border: 1px solid var(--neon-cyan); padding: 20px; border-radius: 10px; box-shadow: 0 0 25px rgba(0,243,255,0.3); width: 80%; max-width: 350px;}
+        .hacker-input { background: transparent; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); font-family: 'Share Tech Mono'; font-size: 18px; padding: 10px; width: 100%; box-sizing: border-box; text-align: center; margin-bottom: 15px; text-transform: uppercase;}
+        .hacker-input:focus { outline: none; box-shadow: 0 0 10px var(--neon-cyan); }
+        .start-btn { background: transparent; color: var(--neon-cyan); border: 2px solid var(--neon-cyan); padding: 12px 20px; font-family: 'Orbitron'; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; width: 100%; margin-bottom: 10px;}
+        .start-btn:hover { background: var(--neon-cyan); color: black; box-shadow: 0 0 20px var(--neon-cyan); }
+        .start-btn-alt { background: transparent; color: var(--neon-pink); border: 2px solid var(--neon-pink); padding: 12px 20px; font-family: 'Orbitron'; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; width: 100%; margin-bottom: 10px;}
+        .start-btn-alt:hover { background: var(--neon-pink); color: black; box-shadow: 0 0 20px var(--neon-pink); }
+        .start-btn-guest { background: transparent; color: #888; border: 2px solid #555; padding: 10px 20px; font-family: 'Orbitron'; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; width: 100%; margin-bottom: 0;}
+        .start-btn-guest:hover { background: #555; color: white; box-shadow: 0 0 15px #555; }
+        
+        /* Overlays */
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 16, 0.98); z-index: 60; display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .store-header-container { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; position: sticky; top: 0; background: rgba(5, 5, 16, 0.98); z-index: 10; }
+        .close-btn { background: transparent; border: 1px solid var(--neon-pink); color: var(--neon-pink); font-family: 'Share Tech Mono'; padding: 6px 12px; cursor: pointer; transition: 0.2s; font-weight: bold; }
+        .close-btn:hover { background: var(--neon-pink); color: black; box-shadow: 0 0 10px var(--neon-pink); }
+        .store-item { border: 1px solid #444; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); }
+        .buy-btn { background: #f1c40f; color: black; border: none; padding: 8px 12px; cursor: pointer; font-family: 'Share Tech Mono'; font-weight: bold; transition: 0.2s; font-size: 12px;}
+        .buy-btn:hover:not(:disabled) { box-shadow: 0 0 15px #f1c40f; transform: scale(1.05); }
+        .buy-btn:disabled { background: #333; color: #888; cursor: not-allowed; box-shadow: none; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050510; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
     </style>
 </head>
 <body>
 
-<div class="galaxy-bg"><div class="stars"></div></div>
+<div class="galaxy-bg">
+    <div class="stars"></div>
+    <div class="stars-2"></div>
+    <div class="stars-3"></div>
+</div>
+
 <div class="cyber-grid"></div>
 
 <div id="start-screen">
-    <h1 style="color:var(--neon-cyan); font-family:'Orbitron'; font-size: 32px; margin-bottom: 20px;">CYBER-MATH</h1>
+    <h1 style="font-size: 30px; margin-bottom: 20px; text-shadow: 0 0 20px var(--neon-cyan); text-align:center;">Cyber-Math<br>Overdrive</h1>
     <div class="login-box">
-        <input type="text" id="hacker-id-input" class="action-btn" placeholder="ENTER ID" style="margin-bottom:12px; text-align:center;">
-        <button class="action-btn" onclick="loadHackerId()" style="margin-bottom:12px;">RESUME SESSION</button>
-        <div style="border-bottom:1px solid #333; margin:15px 0;"></div>
-        <select id="difficulty-select" class="action-btn" style="margin-bottom:12px; background:#000;">
+        
+        <form onsubmit="event.preventDefault(); loadHackerId();" style="width: 100%;">
+            <p style="font-size:12px; color:#888; margin-top:0;">ENTER HACKER ID TO RESUME</p>
+            <input type="text" id="hacker-id-input" name="username" autocomplete="username" class="hacker-input" placeholder="e.g. X7K9P2" maxlength="6">
+            <button type="submit" class="start-btn">RESUME SESSION</button>
+        </form>
+        
+        <div style="margin: 15px 0; border-bottom: 1px solid #444;"></div>
+        
+        <p style="font-size:12px; color:#888; margin-top:0;">SELECT PROTOCOL & START</p>
+        <select id="difficulty-select" class="hacker-input" style="margin-bottom: 15px; background: rgba(0,0,0,0.8); cursor: pointer;">
             <option value="easy">EASY MODE</option>
             <option value="medium" selected>MEDIUM MODE</option>
             <option value="hard">HARD MODE</option>
         </select>
-        <button class="action-btn" style="border-color:var(--neon-pink); color:var(--neon-pink);" onclick="startNewSession()">NEW HACKER</button>
-        <p id="auth-msg" style="color:var(--neon-pink); font-size:12px; margin-top:12px; font-weight: bold;"></p>
+
+        <button class="start-btn-alt" onclick="startNewSession()">NEW HACKER</button>
+        <button class="start-btn-guest" onclick="startGuestSession()">GUEST ACCESS</button>
+        
+        <p id="auth-msg" style="color:var(--neon-pink); font-size:12px; height:15px; margin-bottom:0; font-weight:bold; margin-top: 10px;"></p>
     </div>
+</div>
+
+<div id="id-modal" class="overlay" style="justify-content:center; padding: 20px; z-index: 150; background: rgba(5, 5, 16, 0.99);">
+    <h2 style="color: var(--neon-green); font-family: 'Orbitron'; font-size:24px; text-align:center; text-shadow: 0 0 10px var(--neon-green);">ID GENERATED</h2>
+    <p style="margin-bottom: 20px; font-size:14px; text-align:center; color: #fff;">This is your secure Hacker ID.<br>Write it down or copy it to resume later!</p>
+    
+    <div style="font-family: 'Orbitron'; font-weight: bold; font-size: 45px; color: var(--neon-cyan); letter-spacing: 5px; margin-bottom: 15px; text-shadow: 0 0 20px var(--neon-cyan);" id="id-modal-text">---</div>
+    
+    <button class="action-btn" id="copy-id-btn" onclick="copyHackerId()" style="border-color:var(--neon-cyan); color:var(--neon-cyan); width: 80%; max-width: 300px; margin-bottom: 15px;">[ COPY TO CLIPBOARD ]</button>
+    <button class="action-btn" onclick="closeIdModal()" style="border-color:var(--neon-green); color:var(--neon-green); width: 80%; max-width: 300px;">[ I WROTE IT DOWN ]</button>
 </div>
 
 <div id="hud-container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+    <div class="header-system">
         <div>
-            <h2 style="margin:0; font-size:16px;">NODE <span id="level-txt">1</span></h2>
-            <div id="display-diff" style="color:var(--neon-pink); font-size:11px; font-weight:900;">MEDIUM</div>
+            <h1>Node <span id="level-txt">1</span></h1>
+            <div class="stat-box" style="color: #fff; display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                <span>ID: <span id="display-hacker-id" style="color:var(--neon-cyan); font-weight:bold;">---</span></span>
+                <button class="logout-btn" onclick="logoutSession()">[ LOGOUT ]</button>
+            </div>
+            <div class="stat-box" style="color: #fff; margin-top: 5px;">
+                <span style="color: var(--neon-pink); font-weight: bold; text-transform: uppercase;" id="display-diff">MEDIUM</span>
+            </div>
         </div>
-        <div id="timer" style="font-size:28px; font-family:'Orbitron';">30.0</div>
+        <div style="text-align: right;">
+            <div class="stat-box">Score: <span id="score-txt">0</span></div>
+            <div class="stat-box" style="color: var(--neon-green)">Top: <span id="top-score-txt">0</span></div>
+        </div>
+        <div id="timer">30.0</div>
     </div>
-    <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:14px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px;">
-        <div style="color:#f1c40f;">CORES: <span id="core-txt">0</span></div>
-        <div style="color:var(--neon-pink);">COMBO: x<span id="combo-txt">1</span></div>
+
+    <div class="currency-bar">
+        <div class="data-cores">Data Cores: <span id="core-txt">0</span></div>
+        <div class="combo-meter">Combo: x<span id="combo-txt">1</span></div>
     </div>
-    <div style="display:flex; gap:12px; margin-bottom: 10px;">
-        <button class="action-btn" id="emp-btn" onclick="triggerEMP()">EMP</button>
-        <button class="action-btn" onclick="openStore()" style="border-color:#f1c40f; color:#f1c40f;">STORE</button>
+
+    <div class="btn-row">
+        <button class="action-btn" id="emp-btn" onclick="triggerEMP()">[ EXECUTE EMP ]</button>
+        <button class="action-btn" onclick="openStore()" style="border-color: #f1c40f; color: #f1c40f;">[ BLACK MARKET ]</button>
     </div>
-    <div id="target-num">0</div>
+
+    <div class="target-display">
+        <span style="font-size: 10px; color: #888;">Override Code Required</span>
+        <span id="target-num">0</span>
+    </div>
+
     <div id="drop-zone" class="drop-zone"></div>
     <div id="pool-zone" class="drop-zone"></div>
-    <div id="system-msg" style="text-align:center; font-weight:900; height:24px; color: var(--neon-green);"></div>
-</div>
 
-<div id="store-overlay" class="overlay">
-    <h2 style="color:#f1c40f; font-family:'Orbitron';">BLACK MARKET</h2>
-    <p>Cores: <span id="store-balance" style="color:#f1c40f;">0</span></p>
-    <button class="action-btn" style="margin-bottom:10px;" onclick="purchaseUpgrade('timeDilator', 1000)">Time Dilator (1000)</button>
-    <button class="action-btn" onclick="closeStore()">BACK TO NODE</button>
+    <div id="system-msg"></div>
+
+    <div id="ad-overlay" class="overlay" style="justify-content:center; padding: 20px;">
+        <h2 id="ad-title" style="color: var(--neon-pink); font-family: 'Orbitron'; font-size:22px; text-align:center;">SYSTEM FAILURE</h2>
+        <p id="ad-desc" style="margin-bottom: 30px; font-size:14px; text-align:center;"></p>
+        <button class="action-btn" id="watch-ad-btn" onclick="triggerAdNetwork()" style="border-color:var(--neon-green); color:var(--neon-green);">► WATCH AD</button>
+        <button id="ad-abort-btn" style="background:transparent; border:none; color:#888; cursor:pointer; text-transform:uppercase; margin-top:15px; font-size:12px;" onclick="cancelAd()">Abort</button>
+        <div id="ad-progress-container" style="display:none; width: 80%; height: 10px; border: 1px solid var(--neon-cyan); margin-top: 20px;"><div id="ad-progress-fill" style="width: 0%; height: 100%; background: var(--neon-cyan);"></div></div>
+    </div>
+
+    <div id="store-overlay" class="overlay">
+        <div class="store-header-container">
+            <h2 style="color: #f1c40f; font-family: 'Orbitron'; margin: 0; font-size: 18px;">BLACK MARKET</h2>
+            <button class="close-btn" onclick="closeStore()">[ X ] CLOSE</button>
+        </div>
+
+        <p style="color: #888; margin-bottom: 15px; font-size: 12px; width: 100%; text-align: left;">Available Balance: <span id="store-core-balance" style="color:#f1c40f; font-weight:bold;">0</span></p>
+
+        <h3 style="color: var(--neon-cyan); width: 100%; text-align: left; margin: 5px 0; font-size:14px;">[ OVERRIDES ]</h3>
+        <div class="store-item"><div><strong style="color: #ff007f; font-size:14px;">Neon Plasma</strong><br><span style="font-size: 10px; color: #888;">Visual Upgrade</span></div><button class="buy-btn" id="buy-theme-1" onclick="purchaseTheme('neon-pink', 250)">250</button></div>
+        <div class="store-item"><div><strong style="color: #39ff14; font-size:14px;">Toxic Waste</strong><br><span style="font-size: 10px; color: #888;">Visual Upgrade</span></div><button class="buy-btn" id="buy-theme-2" onclick="purchaseTheme('neon-green', 500)">500</button></div>
+        <div class="store-item"><div><strong style="color: #a0a5a9; font-size:14px;">Reactive Zinc</strong><br><span style="font-size: 10px; color: #888;">Visual Upgrade</span></div><button class="buy-btn" id="buy-theme-3" onclick="purchaseTheme('reactive-zinc', 750)">750</button></div>
+        <div class="store-item"><div><strong style="color: #ffd700; font-size:14px;">Cyber-Gold</strong><br><span style="font-size: 10px; color: #888;">Premium Cosmetic</span></div><button class="buy-btn" id="buy-theme-4" onclick="purchaseTheme('cyber-gold', 1000)">1000</button></div>
+        <div class="store-item"><div><strong style="color: #00ffff; text-shadow: 2px 2px #ff00ff; font-size:14px;">Holo-Glitch</strong><br><span style="font-size: 10px; color: #888;">Premium Cosmetic</span></div><button class="buy-btn" id="buy-theme-5" onclick="purchaseTheme('holo-glitch', 1500)">1500</button></div>
+
+        <h3 style="color: var(--neon-cyan); width: 100%; text-align: left; margin: 15px 0 5px 0; font-size:14px;">[ PERMANENT UPGRADES ]</h3>
+        <div class="store-item"><div><strong style="color: #00f3ff; font-size:14px;">Time Dilator</strong><br><span style="font-size: 10px; color: #888;">+3.0s to every node.</span></div><button class="buy-btn" id="buy-upg-time" onclick="purchaseUpgrade('timeDilator', 1500)">1500</button></div>
+        <div class="store-item"><div><strong style="color: #ff007f; font-size:14px;">Spellbreaker</strong><br><span style="font-size: 10px; color: #888;">Exposes one decoy.</span></div><button class="buy-btn" id="buy-upg-spell" onclick="purchaseUpgrade('spellbreaker', 2500)">2500</button></div>
+        <div class="store-item"><div><strong style="color: #39ff14; font-size:14px;">Decoy Deflector</strong><br><span style="font-size: 10px; color: #888;">Spawns 1 less decoy.</span></div><button class="buy-btn" id="buy-upg-decoy" onclick="purchaseUpgrade('decoyDeflector', 4000)">4000</button></div>
+        <div class="store-item"><div><strong style="color: #f1c40f; font-size:14px;">Overclocked Core</strong><br><span style="font-size: 10px; color: #888;">+20% Score on win.</span></div><button class="buy-btn" id="buy-upg-overclock" onclick="purchaseUpgrade('overclocked', 5000)">5000</button></div>
+    </div>
 </div>
 
 <script>
     let currentHackerId = "";
-    let sys = { level: 1, target: 0, time: 30, active: false, combo: 1, cores: 0, difficulty: 'medium', upgrades: { timeDilator: false } };
-    
-    let audioCtx;
-    function initAudio() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+    let sys = { 
+        level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
+        active: false, empAvailable: true, startTime: 0,
+        combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
+        difficulty: 'medium', 
+        upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
+    };
+
+    window.cloudConnect = async function() { return false; };
+    window.cloudSave = async function() {};
+    window.cloudLoad = async function(id) { return null; };
+
+    let audioCtx; let heartbeatInterval = null;
+    function playSound(type) {
+        if (!audioCtx || audioCtx.state === 'suspended') return;
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
+        if (type === 'drag') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
+        else if (type === 'drop') { osc.type = 'square'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
+        else if (type === 'emp') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3); gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3); } 
+        else if (type === 'win') { osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.4); osc.start(now); osc.stop(now + 0.4); } 
+        else if (type === 'error') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.setValueAtTime(80, now + 0.1); gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
+        else if (type === 'heartbeat') { osc.type = 'sine'; osc.frequency.setValueAtTime(60, now); gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
+        else if (type === 'buy') { osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1600, now+0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
     }
 
-    function playSound(freq, duration = 0.1) {
-        if (!audioCtx) return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
-    }
+    window.addEventListener('load', async () => {
+        const savedId = localStorage.getItem('cm_hacker_id');
+        if (savedId && savedId !== 'GUEST') {
+            const inputEl = document.getElementById('hacker-id-input');
+            if(inputEl) inputEl.value = savedId;
+            const msgBox = document.getElementById('auth-msg');
+            if(msgBox) msgBox.innerText = "SAVED ID FOUND. CLICK RESUME.";
+            
+            const connected = await window.cloudConnect();
+            if (connected) {
+                const data = await window.cloudLoad(savedId);
+                if (data) {
+                    sys.topScore = data.topScore || 0; 
+                    sys.cores = data.cores || 0;
+                    sys.level = data.level || 1;
+                    sys.combo = data.combo || 1; 
+                    sys.difficulty = data.difficulty || 'medium';
+                    sys.unlockedThemes = data.unlockedThemes || [];
+                    sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
+                }
+            }
+        }
+    });
 
-    // --- GAME ENGINE ---
+    window.startNewSession = async function() {
+        const msgBox = document.getElementById('auth-msg');
+        if(msgBox) msgBox.innerText = "CONNECTING...";
+        const connected = await window.cloudConnect();
+        if(!connected) { if(msgBox) msgBox.innerText = "DATABASE FAILED TO CONNECT."; return; }
+        
+        currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        const diffSelect = document.getElementById('difficulty-select');
+        sys.difficulty = diffSelect ? diffSelect.value : 'medium';
+
+        if(msgBox) msgBox.innerText = "GENERATING ID...";
+        await window.cloudSave();
+        
+        localStorage.setItem('cm_hacker_id', currentHackerId);
+        
+        const startScreen = document.getElementById('start-screen');
+        if(startScreen) startScreen.style.display = 'none';
+        
+        const modalText = document.getElementById('id-modal-text');
+        if(modalText) modalText.innerText = currentHackerId;
+        
+        const idModal = document.getElementById('id-modal');
+        if(idModal) idModal.style.display = 'flex';
+    };
+
+    window.closeIdModal = function() {
+        const idModal = document.getElementById('id-modal');
+        if(idModal) idModal.style.display = 'none';
+        startGameUI();
+    };
+
+    window.copyHackerId = function() {
+        navigator.clipboard.writeText(currentHackerId).then(() => {
+            playSound('drag');
+            const btn = document.getElementById('copy-id-btn');
+            btn.innerText = "[ COPIED! ]";
+            btn.style.background = "var(--neon-cyan)";
+            btn.style.color = "black";
+            
+            setTimeout(() => {
+                btn.innerText = "[ COPY TO CLIPBOARD ]";
+                btn.style.background = "transparent";
+                btn.style.color = "var(--neon-cyan)";
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    };
+
+    window.loadHackerId = async function() {
+        const inputEl = document.getElementById('hacker-id-input');
+        if(!inputEl) return;
+        const input = inputEl.value.trim().toUpperCase();
+        if(input.length < 5) return;
+        
+        const msgBox = document.getElementById('auth-msg');
+        if(msgBox) msgBox.innerText = "CONNECTING...";
+        
+        const connected = await window.cloudConnect();
+        if(!connected) { if(msgBox) msgBox.innerText = "DATABASE FAILED TO CONNECT."; return; }
+
+        if(msgBox) msgBox.innerText = "SEARCHING...";
+        const data = await window.cloudLoad(input);
+        if(data) {
+            sys.topScore = data.topScore || 0; 
+            sys.cores = data.cores || 0;
+            sys.level = data.level || 1;
+            sys.combo = data.combo || 1;
+            sys.difficulty = data.difficulty || 'medium'; 
+            sys.unlockedThemes = data.unlockedThemes || [];
+            sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
+            currentHackerId = input;
+            
+            localStorage.setItem('cm_hacker_id', currentHackerId);
+            
+            startGameUI();
+        } else {
+            if(msgBox) msgBox.innerText = "HACKER ID NOT FOUND";
+        }
+    };
+
+    window.startGuestSession = function() {
+        currentHackerId = "GUEST";
+        const diffSelect = document.getElementById('difficulty-select');
+        const selectedDiff = diffSelect ? diffSelect.value : 'medium';
+
+        sys = { 
+            level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
+            active: false, empAvailable: true, startTime: 0,
+            combo: 1, cores: 0, unlockedThemes: [], adRewardType: null,
+            difficulty: selectedDiff, 
+            upgrades: { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false }
+        };
+        localStorage.setItem('cm_hacker_id', 'GUEST');
+        startGameUI();
+    };
+
+    window.logoutSession = function() {
+        localStorage.removeItem('cm_hacker_id');
+        location.reload(); 
+    };
+
     function startGameUI() {
-        initAudio();
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('hud-container').style.opacity = '1';
-        document.getElementById('display-diff').innerText = sys.difficulty.toUpperCase();
-        updateUI(); initProtocol();
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+        
+        const startScreen = document.getElementById('start-screen');
+        if(startScreen) startScreen.style.display = 'none';
+        
+        const hudContainer = document.getElementById('hud-container');
+        if(hudContainer) hudContainer.style.opacity = '1';
+        
+        const idDisplay = document.getElementById('display-hacker-id');
+        if(idDisplay) idDisplay.innerText = currentHackerId;
+        
+        const diffDisplay = document.getElementById('display-diff');
+        if(diffDisplay) diffDisplay.innerText = sys.difficulty + " MODE"; 
+
+        const levelTxt = document.getElementById('level-txt');
+        if(levelTxt) levelTxt.innerText = sys.level; 
+        
+        const comboTxt = document.getElementById('combo-txt');
+        if(comboTxt) comboTxt.innerText = sys.combo;
+        
+        const topScoreTxt = document.getElementById('top-score-txt');
+        if(topScoreTxt) topScoreTxt.innerText = sys.topScore;
+        
+        const scoreTxt = document.getElementById('score-txt');
+        if(scoreTxt) scoreTxt.innerText = sys.score;
+        
+        const coreTxt = document.getElementById('core-txt');
+        if(coreTxt) coreTxt.innerText = sys.cores;
+        
+        updateStoreUI(); playSound('win'); initProtocol();
     }
 
-    function updateUI() {
-        document.getElementById('level-txt').innerText = sys.level;
-        document.getElementById('core-txt').innerText = sys.cores;
-        document.getElementById('combo-txt').innerText = sys.combo;
-    }
-
-    // --- IMPROVED DRAG & DROP ---
     let draggedBlock = null; let offsetX = 0, offsetY = 0;
-    function handleStart(e) {
-        const touch = e.touches ? e.touches[0] : e;
-        const target = touch.target.closest('.block');
-        if (!target || !sys.active) return;
+    function handlePointerDown(e) {
+        if (!sys.active || draggedBlock) return;
+        const target = e.target.closest('.block'); if (!target) return;
+        if (e.cancelable && e.type !== 'touchstart') e.preventDefault(); 
+        
         draggedBlock = target;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         const rect = draggedBlock.getBoundingClientRect();
-        offsetX = touch.clientX - rect.left;
-        offsetY = touch.clientY - rect.top;
-        draggedBlock.classList.add('dragging');
+        
+        offsetX = clientX - rect.left; offsetY = clientY - rect.top;
+        draggedBlock.dataset.originalParent = draggedBlock.parentElement.id;
+        
+        const placeholder = document.createElement('div');
+        placeholder.className = 'block'; placeholder.id = 'drag-placeholder'; placeholder.style.visibility = 'hidden';
+        draggedBlock.parentElement.insertBefore(placeholder, draggedBlock);
+        
         document.body.appendChild(draggedBlock);
-        moveAt(touch.clientX, touch.clientY);
-        playSound(440, 0.05);
+        Object.assign(draggedBlock.style, { position:'fixed', margin:'0', width:rect.width+'px', height:rect.height+'px', left:rect.left+'px', top:rect.top+'px', zIndex:'9999' });
+        draggedBlock.classList.add('dragging'); playSound('drag');
     }
-
-    function moveAt(x, y) {
-        if(!draggedBlock) return;
-        draggedBlock.style.position = 'fixed';
-        draggedBlock.style.left = (x - offsetX) + 'px';
-        draggedBlock.style.top = (y - offsetY) + 'px';
+    function handlePointerMove(e) {
+        if (!draggedBlock) return; e.preventDefault(); 
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        draggedBlock.style.left = (clientX - offsetX) + 'px'; draggedBlock.style.top = (clientY - offsetY) + 'px';
     }
-
-    function handleMove(e) { if(draggedBlock) { e.preventDefault(); const t = e.touches ? e.touches[0] : e; moveAt(t.clientX, t.clientY); } }
-
-    function handleEnd(e) {
+    function handlePointerUp(e) {
         if (!draggedBlock) return;
-        const touch = e.changedTouches ? e.changedTouches[0] : e;
-        const dz = document.getElementById('drop-zone');
-        const dzRect = dz.getBoundingClientRect();
+        const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+        const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
         
         draggedBlock.classList.remove('dragging');
-        if (touch.clientX >= dzRect.left && touch.clientX <= dzRect.right && touch.clientY >= dzRect.top && touch.clientY <= dzRect.bottom) {
-            dz.appendChild(draggedBlock);
-        } else {
-            document.getElementById('pool-zone').appendChild(draggedBlock);
+        Object.assign(draggedBlock.style, { position:'', width:'', height:'', left:'', top:'', zIndex:'', margin:'' });
+        
+        const placeholder = document.getElementById('drag-placeholder');
+        if (placeholder) placeholder.remove();
+
+        const dropZone = document.getElementById('drop-zone');
+        const dzRect = dropZone.getBoundingClientRect();
+        const isOverDropZone = (clientX >= dzRect.left && clientX <= dzRect.right && clientY >= dzRect.top && clientY <= dzRect.bottom);
+
+        playSound('drop');
+        if (isOverDropZone) { 
+            dropZone.appendChild(draggedBlock); 
+        } else { 
+            const poolZone = document.getElementById('pool-zone');
+            if (poolZone) poolZone.appendChild(draggedBlock);
         }
         
-        draggedBlock.style.position = ''; draggedBlock.style.left = ''; draggedBlock.style.top = '';
+        validateInput(); 
         draggedBlock = null;
-        playSound(220, 0.05);
-        validateInput();
     }
 
-    document.addEventListener('touchstart', handleStart, {passive: false});
-    document.addEventListener('touchmove', handleMove, {passive: false});
-    document.addEventListener('touchend', handleEnd);
-    document.addEventListener('mousedown', handleStart);
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('mousemove', handlePointerMove, { passive: false });
+    document.addEventListener('mouseup', handlePointerUp);
+    document.addEventListener('touchstart', handlePointerDown, { passive: false });
+    document.addEventListener('touchmove', handlePointerMove, { passive: false });
+    document.addEventListener('touchend', handlePointerUp);
+    document.addEventListener('touchcancel', handlePointerUp);
 
     function initProtocol() {
-        sys.active = true;
-        document.getElementById('drop-zone').innerHTML = '';
-        document.getElementById('pool-zone').innerHTML = '';
+        sys.active = true; sys.empAvailable = true; sys.startTime = Date.now();
         
-        let count = sys.difficulty === 'easy' ? 2 : (sys.difficulty === 'hard' ? 4 : 3);
-        let max = sys.difficulty === 'easy' ? 6 : 12;
-        let sum = 0; let blocks = [];
+        const sysMsg = document.getElementById('system-msg');
+        if(sysMsg) { sysMsg.innerText = "AWAITING INPUT..."; sysMsg.style.color = "var(--neon-cyan)"; }
         
-        for(let i=0; i<count; i++) {
-            let v = Math.floor(Math.random() * max) + 1;
-            sum += v; blocks.push({v:v, d:false});
+        const empBtn = document.getElementById('emp-btn');
+        if(empBtn) { empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)"; }
+        
+        const dropZone = document.getElementById('drop-zone');
+        if(dropZone) dropZone.innerHTML = ''; 
+        
+        const poolZone = document.getElementById('pool-zone');
+        if(poolZone) poolZone.innerHTML = '';
+        
+        const blocks = document.querySelectorAll('body > .block');
+        for (let i = 0; i < blocks.length; i++) { blocks[i].remove(); }
+        const placeholders = document.querySelectorAll('#drag-placeholder');
+        for (let i = 0; i < placeholders.length; i++) { placeholders[i].remove(); }
+        draggedBlock = null; 
+
+        const levelTxt = document.getElementById('level-txt');
+        if(levelTxt) levelTxt.innerText = sys.level; 
+        
+        const comboTxt = document.getElementById('combo-txt');
+        if(comboTxt) comboTxt.innerText = sys.combo;
+        
+        const timerUI = document.getElementById('timer');
+        if(timerUI) timerUI.classList.remove('danger-time'); 
+        
+        clearInterval(heartbeatInterval); heartbeatInterval = null;
+
+        // --- NEW: GENIUS MATH BRAIN 2.0 ---
+        let minTarget, maxTarget, blockCount, baseDecoyCount;
+
+        if (sys.difficulty === 'easy') {
+            minTarget = 5 + (sys.level * 2);
+            maxTarget = 10 + (sys.level * 4);
+            blockCount = Math.min(2 + Math.floor((sys.level - 1) / 4), 3); 
+            baseDecoyCount = sys.level > 5 ? 1 : 0; 
+        } 
+        else if (sys.difficulty === 'hard') {
+            minTarget = 15 + (sys.level * 5);
+            maxTarget = 30 + (sys.level * 8);
+            blockCount = Math.min(3 + Math.floor((sys.level - 1) / 3), 5); 
+            baseDecoyCount = sys.level > 10 ? Math.min(2 + Math.floor((sys.level - 10) / 3), 5) : 2; 
+        } 
+        else {
+            minTarget = 10 + (sys.level * 3);
+            maxTarget = 20 + (sys.level * 6);
+            blockCount = Math.min(2 + Math.floor((sys.level - 1) / 3), 4); 
+            baseDecoyCount = sys.level > 10 ? Math.min(1 + Math.floor((sys.level - 10) / 4), 4) : 1; 
         }
-        sys.target = sum;
-        document.getElementById('target-num').innerText = sum;
 
-        // Decoy logic
-        let decoys = sys.level > 5 ? (sys.difficulty === 'easy' ? 1 : 2) : 0;
-        for(let i=0; i<decoys; i++) blocks.push({v: Math.floor(Math.random()*max)+1, d:true});
+        // BOSS NODE LOGIC (Every 5 levels)
+        let isBossNode = (sys.level % 5 === 0);
+        const targetNum = document.getElementById('target-num');
 
-        blocks.sort(() => Math.random() - 0.5).forEach(b => {
-            const el = document.createElement('div'); el.className = 'block'; el.innerText = b.v; el.dataset.val = b.v;
-            document.getElementById('pool-zone').appendChild(el);
-        });
-        startClock();
+        if (isBossNode) {
+            // Force a clean round number (10, 20, 50, etc.)
+            let rawTarget = Math.floor(Math.random() * (maxTarget - minTarget + 1)) + minTarget;
+            sys.target = Math.max(10, Math.round(rawTarget / 10) * 10);
+            if(sysMsg) {
+                sysMsg.innerText = "BOSS NODE DETECTED"; 
+                sysMsg.style.color = "var(--neon-pink)";
+            }
+            if(targetNum) {
+                targetNum.style.webkitTextStroke = "2px var(--neon-pink)";
+                targetNum.style.textShadow = "0 0 30px rgba(255, 0, 127, 0.5)";
+            }
+            playSound('error'); 
+        } else {
+            sys.target = Math.floor(Math.random() * (maxTarget - minTarget + 1)) + minTarget;
+            if(sysMsg) {
+                sysMsg.innerText = "AWAITING INPUT..."; 
+                sysMsg.style.color = "var(--neon-cyan)";
+            }
+            if(targetNum) {
+                targetNum.style.webkitTextStroke = "2px var(--neon-cyan)";
+                targetNum.style.textShadow = "0 0 30px rgba(0, 243, 255, 0.5)";
+            }
+        }
+        
+        if(targetNum) targetNum.innerText = sys.target;
+
+        // TARGET PARTITIONING
+        let remaining = sys.target;
+        let newBlocks = [];
+        for(let i=0; i<blockCount - 1; i++) { 
+            let maxPiece = remaining - (blockCount - 1 - i);
+            let avgPiece = Math.floor(remaining / (blockCount - i));
+            let piece = Math.max(1, Math.floor(Math.random() * avgPiece) + Math.ceil(avgPiece / 2));
+            if(piece > maxPiece) piece = maxPiece;
+            newBlocks.push({val: piece, isDecoy: false});
+            remaining -= piece;
+        }
+        newBlocks.push({val: remaining, isDecoy: false}); 
+        
+        // SMART DECOYS
+        let deflectorBonus = sys.upgrades && sys.upgrades.decoyDeflector ? 1 : 0;
+        let finalDecoyCount = Math.max(baseDecoyCount - deflectorBonus, 0);
+        if (isBossNode) finalDecoyCount += 1; 
+
+        for(let i=0; i<finalDecoyCount; i++) { 
+            let sourcePiece = newBlocks[Math.floor(Math.random() * blockCount)].val;
+            let errorType = Math.random();
+            let errorVal = 0;
+            
+            if (errorType < 0.3) errorVal = 1; // Off by 1
+            else if (errorType < 0.6) errorVal = -1; // Off by 1
+            else if (errorType < 0.8) errorVal = 10; // Off by 10
+            else errorVal = -10; // Off by 10
+            
+            let decoyVal = sourcePiece + errorVal;
+            if (decoyVal <= 0 || decoyVal === sourcePiece) decoyVal = sourcePiece + 2; 
+            
+            newBlocks.push({val: decoyVal, isDecoy: true}); 
+        }
+        
+        newBlocks.sort(() => Math.random() - 0.5);
+
+        if(poolZone) {
+            for (let i = 0; i < newBlocks.length; i++) {
+                const bData = newBlocks[i];
+                const b = document.createElement('div'); b.className = 'block'; b.innerText = bData.val; b.id = 'blk-' + i;
+                b.dataset.val = bData.val; b.dataset.decoy = bData.isDecoy;
+                poolZone.appendChild(b);
+            }
+
+            if(sys.upgrades && sys.upgrades.spellbreaker) {
+                const poolBlocks = poolZone.getElementsByClassName('block');
+                for (let i = 0; i < poolBlocks.length; i++) {
+                    if (poolBlocks[i].dataset.decoy === "true") {
+                        poolBlocks[i].classList.add('spell-broken');
+                        break;
+                    }
+                }
+            }
+        }
+        startClock(false);
     }
 
-    // --- NEW RELAXED TIMERS ---
-    function startClock() {
+    function startClock(isResume = false) {
         clearInterval(sys.timerInterval);
-        
-        let calculatedTime;
-        if(sys.difficulty === 'easy') calculatedTime = Math.max(25, 45 - Math.floor((sys.level - 1) * 0.5)); 
-        else if(sys.difficulty === 'hard') calculatedTime = Math.max(15, 35 - Math.floor((sys.level - 1) * 1.5)); 
-        else calculatedTime = Math.max(20, 40 - (sys.level - 1));
+        if (!isResume) {
+            // RELAXED TIMERS
+            let calculatedTime;
+            if(sys.difficulty === 'easy') calculatedTime = Math.max(25, 45 - Math.floor((sys.level - 1) * 0.5)); 
+            else if(sys.difficulty === 'hard') calculatedTime = Math.max(15, 35 - Math.floor((sys.level - 1) * 1.5)); 
+            else calculatedTime = Math.max(20, 40 - (sys.level - 1));
 
-        if(sys.upgrades.timeDilator) calculatedTime += 3.0;
-        sys.time = calculatedTime;
-
+            if(sys.upgrades && sys.upgrades.timeDilator) calculatedTime += 3.0;
+            sys.time = calculatedTime;
+        }
         sys.timerInterval = setInterval(() => {
-            sys.time -= 0.1;
-            document.getElementById('timer').innerText = sys.time.toFixed(1);
-            if(sys.time <= 0) { sys.level = 1; sys.combo = 1; updateUI(); initProtocol(); }
+            sys.time -= 0.1; 
+            const timerUI = document.getElementById('timer');
+            if(timerUI) {
+                timerUI.innerText = sys.time.toFixed(1);
+                if(sys.time <= 5.0 && !timerUI.classList.contains('danger-time')) {
+                    timerUI.classList.add('danger-time');
+                    if(!heartbeatInterval) heartbeatInterval = setInterval(() => playSound('heartbeat'), 500);
+                }
+                if(sys.time <= 0) { timerUI.innerText = "0.0"; offerAdRescue(); }
+            } else if (sys.time <= 0) {
+                offerAdRescue();
+            }
         }, 100);
     }
 
+    window.triggerEMP = function() {
+        if(!sys.active) return;
+        if(!sys.empAvailable) { offerAdEMP(); return; }
+        
+        const poolZone = document.getElementById('pool-zone');
+        if(!poolZone) return;
+        
+        const poolBlocks = poolZone.getElementsByClassName('block');
+        let targetBlock = null;
+        for (let i = 0; i < poolBlocks.length; i++) { if (poolBlocks[i].dataset.decoy === "true" && !poolBlocks[i].classList.contains('spell-broken')) { targetBlock = poolBlocks[i]; break; } }
+        if (!targetBlock) { for (let i = 0; i < poolBlocks.length; i++) { if (poolBlocks[i].dataset.decoy === "true") { targetBlock = poolBlocks[i]; break; } } }
+
+        if(targetBlock) {
+            playSound('emp'); sys.empAvailable = false; 
+            const empBtn = document.getElementById('emp-btn');
+            if(empBtn) { empBtn.innerText = "[ + AD FOR EMP ]"; empBtn.style.borderColor = "var(--neon-green)"; empBtn.style.color = "var(--neon-green)"; }
+            targetBlock.style.transform = 'scale(0)'; setTimeout(() => targetBlock.remove(), 200);
+        } else { 
+            const sysMsg = document.getElementById('system-msg');
+            if(sysMsg) sysMsg.innerText = "NO DECOYS DETECTED"; 
+        }
+    };
+
     function validateInput() {
-        let cur = 0;
-        for(let b of document.getElementById('drop-zone').children) cur += parseInt(b.dataset.val);
-        if (cur === sys.target) {
-            sys.active = false; clearInterval(sys.timerInterval);
-            playSound(880, 0.2);
-            sys.level++; sys.cores += 15; sys.combo++;
-            updateUI(); window.cloudSave(); confetti();
-            setTimeout(initProtocol, 1500);
-        } else if (cur > sys.target) {
-            document.getElementById('system-msg').innerText = "OVERLOAD!";
-            setTimeout(() => { document.getElementById('system-msg').innerText = ""; initProtocol(); }, 1000);
+        const dropZone = document.getElementById('drop-zone'); 
+        if(!dropZone) return;
+        
+        let current = 0; 
+        const droppedBlocks = dropZone.getElementsByClassName('block');
+        for(let i = 0; i < droppedBlocks.length; i++) current += parseInt(droppedBlocks[i].dataset.val);
+
+        if(current === sys.target) { processHackSuccess(); } 
+        else if(current > sys.target) {
+            playSound('error'); 
+            const hud = document.getElementById('hud-container');
+            if(hud) hud.classList.add('glitch-effect');
+            
+            const sysMsg = document.getElementById('system-msg');
+            if(sysMsg) { sysMsg.innerText = "DATA OVERLOAD!"; sysMsg.style.color = "var(--neon-pink)"; }
+            
+            setTimeout(() => { if(hud) hud.classList.remove('glitch-effect'); offerAdRescue(); }, 400);
         }
     }
 
-    function triggerEMP() {
-        const pool = document.getElementById('pool-zone');
-        if(pool.children.length > 0) { pool.removeChild(pool.children[0]); playSound(100, 0.3); }
+    function processHackSuccess() {
+        sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); playSound('win');
+        
+        let diffMult = sys.difficulty === 'easy' ? 0.5 : (sys.difficulty === 'hard' ? 1.5 : 1);
+        let baseTimePoints = ((Date.now() - sys.startTime) / 1000) < 5 ? 300 : 100; 
+        
+        let earnedPoints = Math.floor(baseTimePoints * sys.combo * diffMult);
+        
+        let baseCores = sys.difficulty === 'easy' ? 5 : (sys.difficulty === 'hard' ? 15 : 10);
+        let earnedCores = baseCores + Math.floor(sys.level * sys.combo * 2 * diffMult); 
+
+        if(sys.upgrades.overclocked) {
+            earnedPoints = Math.floor(earnedPoints * 1.2);
+            earnedCores = Math.floor(earnedCores * 1.2);
+        }
+
+        sys.score += earnedPoints; 
+        sys.cores += earnedCores; 
+        sys.combo++; 
+        sys.level++; 
+        
+        window.cloudSave();
+
+        const scoreTxt = document.getElementById('score-txt');
+        if(scoreTxt) scoreTxt.innerText = sys.score;
+        
+        const coreTxt = document.getElementById('core-txt');
+        if(coreTxt) coreTxt.innerText = sys.cores;
+        
+        const sysMsg = document.getElementById('system-msg');
+        if(sysMsg) { sysMsg.innerText = `+${earnedPoints} PTS | +${earnedCores} CORES`; sysMsg.style.color = "var(--neon-green)"; }
+        
+        confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 }, colors: ['#00f3ff', '#39ff14', '#f1c40f'] });
+        setTimeout(initProtocol, 2000);
     }
 
-    function openStore() { sys.active = false; clearInterval(sys.timerInterval); document.getElementById('store-balance').innerText = sys.cores; document.getElementById('store-overlay').style.display = 'flex'; }
-    function closeStore() { document.getElementById('store-overlay').style.display = 'none'; sys.active = true; startClock(); }
-    function purchaseUpgrade(u, c) { if(sys.cores >= c) { sys.cores -= c; sys.upgrades[u] = true; updateUI(); window.cloudSave(); document.getElementById('store-balance').innerText = sys.cores; } }
+    function offerAdRescue() {
+        sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); sys.adRewardType = 'rescue';
+        
+        const adTitle = document.getElementById('ad-title');
+        if(adTitle) adTitle.innerText = "SYSTEM FAILURE"; 
+        
+        const adDesc = document.getElementById('ad-desc');
+        if(adDesc) adDesc.innerHTML = `Your <b>x${sys.combo} Combo</b> is at risk! Watch a sponsor feed to restore power.`;
+        
+        const adAbortBtn = document.getElementById('ad-abort-btn');
+        if(adAbortBtn) { adAbortBtn.innerText = "Abort (Lose Combo)"; adAbortBtn.style.display = 'inline-block'; }
+        
+        const watchAdBtn = document.getElementById('watch-ad-btn');
+        if(watchAdBtn) watchAdBtn.style.display = 'block'; 
+        
+        const progressCont = document.getElementById('ad-progress-container');
+        if(progressCont) progressCont.style.display = 'none';
+        
+        const adOverlay = document.getElementById('ad-overlay');
+        if(adOverlay) adOverlay.style.display = 'flex';
+    }
+
+    function offerAdEMP() {
+        sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval); sys.adRewardType = 'emp';
+        
+        const adTitle = document.getElementById('ad-title');
+        if(adTitle) adTitle.innerText = "EMP DEPLETED"; 
+        
+        const adDesc = document.getElementById('ad-desc');
+        if(adDesc) adDesc.innerHTML = "Need assistance? Watch a sponsor feed to recharge your EMP.";
+        
+        const adAbortBtn = document.getElementById('ad-abort-btn');
+        if(adAbortBtn) { adAbortBtn.innerText = "Cancel"; adAbortBtn.style.display = 'inline-block'; }
+        
+        const watchAdBtn = document.getElementById('watch-ad-btn');
+        if(watchAdBtn) watchAdBtn.style.display = 'block'; 
+        
+        const progressCont = document.getElementById('ad-progress-container');
+        if(progressCont) progressCont.style.display = 'none';
+        
+        const adOverlay = document.getElementById('ad-overlay');
+        if(adOverlay) adOverlay.style.display = 'flex';
+    }
+
+    window.triggerAdNetwork = function() {
+        const watchAdBtn = document.getElementById('watch-ad-btn');
+        if(watchAdBtn) watchAdBtn.style.display = 'none'; 
+        
+        const adAbortBtn = document.getElementById('ad-abort-btn');
+        if(adAbortBtn) adAbortBtn.style.display = 'none';
+        
+        const progressCont = document.getElementById('ad-progress-container');
+        if(progressCont) progressCont.style.display = 'block'; 
+        
+        playSound('emp'); 
+        let progress = 0; const progBar = document.getElementById('ad-progress-fill');
+        const adTimer = setInterval(() => { 
+            progress += 5; 
+            if(progBar) progBar.style.width = progress + '%'; 
+            if(progress >= 100) { clearInterval(adTimer); grantAdReward(); } 
+        }, 150); 
+    };
+
+    function grantAdReward() {
+        playSound('win'); 
+        const adOverlay = document.getElementById('ad-overlay');
+        if(adOverlay) adOverlay.style.display = 'none';
+        
+        const sysMsg = document.getElementById('system-msg');
+        
+        if (sys.adRewardType === 'rescue') {
+            if(sysMsg) { sysMsg.innerText = "SYSTEM RESTORED."; sysMsg.style.color = "var(--neon-green)"; }
+            setTimeout(() => { initProtocol(); }, 1500);
+        } else if (sys.adRewardType === 'emp') {
+            if(sysMsg) { sysMsg.innerText = "EMP RECHARGED."; sysMsg.style.color = "var(--neon-green)"; }
+            sys.empAvailable = true; 
+            const empBtn = document.getElementById('emp-btn');
+            if(empBtn) { empBtn.innerText = "[ EXECUTE EMP ]"; empBtn.style.borderColor = "var(--neon-cyan)"; empBtn.style.color = "var(--neon-cyan)"; }
+            sys.active = true; startClock(true); 
+        }
+    }
+
+    window.cancelAd = function() {
+        if (sys.adRewardType === 'rescue') { executeGameLoss(); } 
+        else { 
+            const adOverlay = document.getElementById('ad-overlay');
+            if(adOverlay) adOverlay.style.display = 'none'; 
+            sys.active = true; startClock(true); 
+        }
+    };
+
+    window.executeGameLoss = function() {
+        const adOverlay = document.getElementById('ad-overlay');
+        if(adOverlay) adOverlay.style.display = 'none'; 
+        
+        playSound('error'); 
+        if (sys.score > sys.topScore) { 
+            sys.topScore = sys.score; 
+            const topScoreTxt = document.getElementById('top-score-txt');
+            if(topScoreTxt) topScoreTxt.innerText = sys.topScore; 
+        }
+        
+        const sysMsg = document.getElementById('system-msg');
+        if(sysMsg) { sysMsg.innerText = "COMBO LOST. RESETTING."; sysMsg.style.color = "var(--neon-pink)"; }
+        
+        sys.level = 1; sys.score = 0; sys.combo = 1; 
+        window.cloudSave(); 
+        
+        setTimeout(() => { 
+            const scoreTxt = document.getElementById('score-txt');
+            if(scoreTxt) scoreTxt.innerText = sys.score; 
+            initProtocol(); 
+        }, 2000);
+    };
+
+    window.openStore = function() {
+        if(!sys.active) return; sys.active = false; clearInterval(sys.timerInterval); clearInterval(heartbeatInterval);
+        
+        const storeBalance = document.getElementById('store-core-balance');
+        if(storeBalance) storeBalance.innerText = sys.cores; 
+        
+        updateStoreUI(); 
+        
+        const storeOverlay = document.getElementById('store-overlay');
+        if(storeOverlay) storeOverlay.style.display = 'flex';
+    };
+
+    window.closeStore = function() { 
+        const storeOverlay = document.getElementById('store-overlay');
+        if(storeOverlay) storeOverlay.style.display = 'none'; 
+        sys.active = true; startClock(true); 
+    };
+
+    window.purchaseTheme = function(themeName, cost) {
+        if(sys.cores >= cost && !sys.unlockedThemes.includes(themeName)) {
+            playSound('buy'); sys.cores -= cost; sys.unlockedThemes.push(themeName); window.cloudSave();
+            
+            const coreTxt = document.getElementById('core-txt');
+            if(coreTxt) coreTxt.innerText = sys.cores; 
+            
+            const storeBalance = document.getElementById('store-core-balance');
+            if(storeBalance) storeBalance.innerText = sys.cores;
+            
+            applyTheme(themeName); updateStoreUI();
+        } else { playSound('error'); }
+    };
+
+    function applyTheme(themeName) {
+        const root = document.documentElement;
+        if(themeName === 'neon-pink') { root.style.setProperty('--block-border', 'var(--neon-pink)'); root.style.setProperty('--block-bg', 'rgba(0, 0, 0, 0.8)'); } 
+        else if (themeName === 'neon-green') { root.style.setProperty('--block-border', 'var(--neon-green)'); root.style.setProperty('--block-bg', 'rgba(0, 0, 0, 0.8)'); } 
+        else if (themeName === 'reactive-zinc') { root.style.setProperty('--block-border', '#a0a5a9'); root.style.setProperty('--block-bg', 'rgba(57, 255, 20, 0.15)'); } 
+        else if (themeName === 'cyber-gold') { root.style.setProperty('--block-border', '#ffd700'); root.style.setProperty('--block-bg', 'rgba(20, 15, 0, 0.9)'); } 
+        else if (themeName === 'holo-glitch') { root.style.setProperty('--block-border', '#00ffff'); root.style.setProperty('--block-bg', 'rgba(255, 0, 255, 0.15)'); } 
+        else { root.style.setProperty('--block-border', 'var(--neon-cyan)'); root.style.setProperty('--block-bg', 'rgba(0, 0, 0, 0.8)'); }
+    }
+
+    window.purchaseUpgrade = function(upgradeId, cost) {
+        if(sys.cores >= cost && !sys.upgrades[upgradeId]) {
+            playSound('buy'); sys.cores -= cost; sys.upgrades[upgradeId] = true; window.cloudSave();
+            
+            const coreTxt = document.getElementById('core-txt');
+            if(coreTxt) coreTxt.innerText = sys.cores; 
+            
+            const storeBalance = document.getElementById('store-core-balance');
+            if(storeBalance) storeBalance.innerText = sys.cores; 
+            
+            updateStoreUI();
+        } else { playSound('error'); }
+    };
+
+    function updateStoreUI() {
+        if (!sys.upgrades) sys.upgrades = { timeDilator: false, spellbreaker: false, decoyDeflector: false, overclocked: false };
+        if (!sys.unlockedThemes) sys.unlockedThemes = [];
+
+        const themes = [ { id: 'neon-pink', btn: 'buy-theme-1' }, { id: 'neon-green', btn: 'buy-theme-2' }, { id: 'reactive-zinc', btn: 'buy-theme-3' }, { id: 'cyber-gold', btn: 'buy-theme-4' }, { id: 'holo-glitch', btn: 'buy-theme-5' } ];
+        themes.forEach(t => {
+            const btn = document.getElementById(t.btn);
+            if(btn && sys.unlockedThemes.includes(t.id)) { btn.innerText = "EQUIP"; btn.style.background = "var(--neon-cyan)"; btn.onclick = () => { applyTheme(t.id); playSound('drag'); closeStore(); }; }
+        });
+        
+        const upgTime = document.getElementById('buy-upg-time');
+        if(upgTime && sys.upgrades.timeDilator) { upgTime.innerText = "ACQUIRED"; upgTime.disabled = true; }
+        
+        const upgSpell = document.getElementById('buy-upg-spell');
+        if(upgSpell && sys.upgrades.spellbreaker) { upgSpell.innerText = "ACQUIRED"; upgSpell.disabled = true; }
+        
+        const upgDecoy = document.getElementById('buy-upg-decoy');
+        if(upgDecoy && sys.upgrades.decoyDeflector) { upgDecoy.innerText = "ACQUIRED"; upgDecoy.disabled = true; }
+        
+        const upgOver = document.getElementById('buy-upg-overclock');
+        if(upgOver && sys.upgrades.overclocked) { upgOver.innerText = "ACQUIRED"; upgOver.disabled = true; }
+    }
 </script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-    
-    const firebaseConfig = { 
-        apiKey: "AIzaSyBgtFxsT_8S7QWk6nSpZwECjJQeKhNbIxE", 
-        authDomain: "cyber-math-db-8b962.firebaseapp.com", 
-        projectId: "cyber-math-db-8b962", 
-        storageBucket: "cyber-math-db-8b962.firebasestorage.app", 
-        messagingSenderId: "252299848545", 
-        appId: "1:252299848545:web:7dc2809ee639a2125a3320" 
-    };
-    
-    let db;
-    window.cloudConnect = async function() { 
-        if(db) return true; 
-        try { 
-            const app = initializeApp(firebaseConfig); 
-            db = getFirestore(app); 
-            return true; 
-        } catch(e) { return false; } 
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBgtFxsT_8S7QWk6nSpZwECjJQeKhNbIxE",
+        authDomain: "cyber-math-db-8b962.firebaseapp.com",
+        projectId: "cyber-math-db-8b962",
+        storageBucket: "cyber-math-db-8b962.firebasestorage.app",
+        messagingSenderId: "252299848545",
+        appId: "1:252299848545:web:7dc2809ee639a2125a3320",
+        measurementId: "G-RL4B0DCB6F"
     };
 
-    window.cloudSave = async function() { 
-        if(!db || !currentHackerId || currentHackerId === "GUEST") return; 
-        await setDoc(doc(db, "players", currentHackerId), { 
-            cores: sys.cores, level: sys.level, combo: sys.combo, difficulty: sys.difficulty, upgrades: sys.upgrades 
-        }); 
-    };
+    let app = null;
+    let db = null;
 
-    window.cloudLoad = async function(id) { 
-        if(!db) return null; 
-        const docSnap = await getDoc(doc(db, "players", id)); 
-        return docSnap.exists() ? docSnap.data() : null; 
-    };
-
-    window.startNewSession = async function() {
-        const connected = await window.cloudConnect();
-        if(!connected) { document.getElementById('auth-msg').innerText = "DB ERROR"; return; }
-        currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
-        sys.difficulty = document.getElementById('difficulty-select').value;
-        await window.cloudSave();
-        localStorage.setItem('cm_hacker_id', currentHackerId);
-        startGameUI();
-    };
-
-    window.loadHackerId = async function() {
-        const input = document.getElementById('hacker-id-input').value.trim().toUpperCase();
-        if(!input) return;
-        const connected = await window.cloudConnect();
-        if(!connected) return;
-        const data = await window.cloudLoad(input);
-        if(data) { 
-            Object.assign(sys, data); 
-            currentHackerId = input; 
-            localStorage.setItem('cm_hacker_id', currentHackerId); 
-            startGameUI(); 
-        } else {
-            document.getElementById('auth-msg').innerText = "ID NOT FOUND";
+    window.cloudConnect = async function() {
+        if(db) return true;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            return true;
+        } catch(e) {
+            console.error("Database connection failed:", e);
+            return false;
         }
+    };
+
+    window.cloudSave = async function() {
+        if(!db || !currentHackerId || currentHackerId === "GUEST") return;
+        
+        const data = { 
+            topScore: sys.topScore, 
+            cores: sys.cores, 
+            level: sys.level, 
+            combo: sys.combo,
+            difficulty: sys.difficulty, 
+            unlockedThemes: sys.unlockedThemes, 
+            upgrades: sys.upgrades 
+        };
+        try { await setDoc(doc(db, "players", currentHackerId), data); } catch(e) { console.error("Save failed:", e); }
+    };
+
+    window.cloudLoad = async function(id) {
+        if(!db) return null;
+        try {
+            const docSnap = await getDoc(doc(db, "players", id));
+            if(docSnap.exists()) return docSnap.data();
+        } catch(e) { console.error("Load failed:", e); }
+        return null;
     };
 </script>
 
 <script>
-    if ('serviceWorker' in navigator) { 
-        window.addEventListener('load', () => navigator.serviceWorker.register('sw.js')); 
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('sw.js').then(function(registration) {
+                console.log('ServiceWorker registration successful');
+            }, function(err) {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        });
     }
 </script>
 </body>
