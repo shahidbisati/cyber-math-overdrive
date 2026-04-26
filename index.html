@@ -243,18 +243,31 @@
         else if (type === 'buy') { osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1600, now+0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
     }
 
-    // --- PRE-FILL SAVED ID ---
-    window.addEventListener('load', () => {
+    // --- PRE-FILL SAVED ID & BACKGROUND LOAD ---
+    window.addEventListener('load', async () => {
         const savedId = localStorage.getItem('cm_hacker_id');
         if (savedId && savedId !== 'GUEST') {
             const inputEl = document.getElementById('hacker-id-input');
             if(inputEl) inputEl.value = savedId;
             const msgBox = document.getElementById('auth-msg');
             if(msgBox) msgBox.innerText = "SAVED ID FOUND. CLICK RESUME.";
+            
+            // Quietly prepare the data in the background
+            const connected = await window.cloudConnect();
+            if (connected) {
+                const data = await window.cloudLoad(savedId);
+                if (data) {
+                    sys.topScore = data.topScore || 0; 
+                    sys.cores = data.cores || 0;
+                    sys.level = data.level || 1;
+                    sys.combo = data.combo || 1; 
+                    sys.unlockedThemes = data.unlockedThemes || [];
+                    sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
+                }
+            }
         }
     });
 
-    // Helper function to force browser password save prompt
     function triggerCredentialPrompt(hackerId) {
         try {
             if (window.PasswordCredential && navigator.credentials) {
@@ -273,7 +286,6 @@
         
         currentHackerId = Math.random().toString(36).substring(2, 8).toUpperCase();
         if(msgBox) msgBox.innerText = "GENERATING ID...";
-        
         await window.cloudSave();
         
         localStorage.setItem('cm_hacker_id', currentHackerId);
@@ -312,8 +324,8 @@
         if(data) {
             sys.topScore = data.topScore || 0; 
             sys.cores = data.cores || 0;
-            // RESTORE LEVEL MEMORY FROM DATABASE
             sys.level = data.level || 1;
+            sys.combo = data.combo || 1;
             sys.unlockedThemes = data.unlockedThemes || [];
             sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
             currentHackerId = input;
@@ -358,6 +370,9 @@
         
         const levelTxt = document.getElementById('level-txt');
         if(levelTxt) levelTxt.innerText = sys.level; 
+        
+        const comboTxt = document.getElementById('combo-txt');
+        if(comboTxt) comboTxt.innerText = sys.combo;
         
         const topScoreTxt = document.getElementById('top-score-txt');
         if(topScoreTxt) topScoreTxt.innerText = sys.topScore;
@@ -814,11 +829,12 @@
 
     window.cloudSave = async function() {
         if(!db || !currentHackerId || currentHackerId === "GUEST") return;
-        // BUG FIX: Now explicitly saving the 'sys.level' into the database!
+        
         const data = { 
             topScore: sys.topScore, 
             cores: sys.cores, 
             level: sys.level, 
+            combo: sys.combo, // Combo is now properly saved to the database!
             unlockedThemes: sys.unlockedThemes, 
             upgrades: sys.upgrades 
         };
