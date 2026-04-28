@@ -244,7 +244,8 @@
         <p id="auth-msg" style="color:var(--neon-pink); font-size:12px; height:15px; margin-bottom:0; font-weight:bold; margin-top: 10px;"></p>
     </div> 
     
-    <div style="margin-top: 25px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-family: 'Share Tech Mono', monospace; font-size: 13px;">
+    <div id="legal-footer" style="margin-top: 25px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-family: 'Share Tech Mono', monospace; font-size: 13px;">
+
         <a href="about.html" style="color: var(--neon-cyan); text-decoration: none; text-shadow: 0 0 5px var(--neon-cyan);">About/How to Play</a>
         <a href="privacy.html" style="color: var(--neon-cyan); text-decoration: none; text-shadow: 0 0 5px var(--neon-cyan);">Privacy Policy</a>
         <a href="terms.html" style="color: var(--neon-cyan); text-decoration: none; text-shadow: 0 0 5px var(--neon-cyan);">Terms of Service</a>
@@ -418,13 +419,18 @@
             }
         }
 
-        // 4. Tell Facebook we are done loading (completely ignored by standard web)
+                // 4. Tell Facebook we are done loading (ignored by standard web)
         if (isFB) {
+            // Hide the HTML links so they don't break the Facebook App!
+            const legalFooter = document.getElementById('legal-footer');
+            if(legalFooter) legalFooter.style.display = 'none';
+
             FBInstant.setLoadingProgress(100);
             await FBInstant.startGameAsync();
             const fbPlayerName = FBInstant.player.getName();
             console.log("Facebook Player Detected: " + fbPlayerName);
         }
+
     });
 
 
