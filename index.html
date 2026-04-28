@@ -362,25 +362,36 @@
         else if (type === 'buy') { osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1600, now+0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
     }
 
-    window.addEventListener('load', async () => {
+        window.addEventListener('load', async () => {
         let savedId = null;
 
-        // 1. Check if we are inside Facebook
+        // 1. Check if we are inside Facebook (with a 1-second timeout so standard web doesn't freeze!)
+        const fbInitPromise = async () => {
+            if (typeof FBInstant === 'undefined') throw new Error("No FB SDK");
+            await FBInstant.initializeAsync();
+            return true;
+        };
+
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("FB Timeout")), 1000)
+        );
+
         try {
-            if (typeof FBInstant !== 'undefined') {
-                await FBInstant.initializeAsync();
-                isFB = true; // Meta environment confirmed!
-                FBInstant.setLoadingProgress(50);
-                
-                const playerData = await FBInstant.player.getDataAsync(['cm_hacker_id']);
-                savedId = playerData['cm_hacker_id'];
-            }
+            // Race the FB initialization against the 1-second timeout
+            await Promise.race([fbInitPromise(), timeoutPromise]);
+            
+            isFB = true; // Meta environment confirmed!
+            FBInstant.setLoadingProgress(50);
+            
+            const playerData = await FBInstant.player.getDataAsync(['cm_hacker_id']);
+            savedId = playerData['cm_hacker_id'];
+            
         } catch (e) {
             console.log("Standard Web Environment Detected. Defaulting to local storage.");
-            isFB = false;
+            isFB = false; // Force standard web mode
         }
 
-        // 2. If NOT on Facebook, fall back to the browser's local memory
+        // 2. If NOT on Facebook, safely fall back to the browser's local memory
         if (!isFB) {
             savedId = localStorage.getItem('cm_hacker_id');
         }
@@ -407,7 +418,7 @@
             }
         }
 
-        // 4. Tell Facebook we are done loading (ignored by standard web)
+        // 4. Tell Facebook we are done loading (completely ignored by standard web)
         if (isFB) {
             FBInstant.setLoadingProgress(100);
             await FBInstant.startGameAsync();
@@ -415,6 +426,7 @@
             console.log("Facebook Player Detected: " + fbPlayerName);
         }
     });
+
 
     window.startNewSession = async function() {
         const msgBox = document.getElementById('auth-msg');
