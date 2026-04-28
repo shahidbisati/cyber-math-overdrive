@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cyber-Math Overdrive (Full-Stack Edition)</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script src="https://connect.facebook.net/en_US/fbinstant.7.1.js"></script>
+
     <script>
     (adsbygoogle = window.adsbygoogle || []).push({
      params: { tag_for_child_directed_treatment: 1 }
@@ -237,15 +242,15 @@
         <button class="start-btn-guest" onclick="startGuestSession()">GUEST ACCESS</button>
         
         <p id="auth-msg" style="color:var(--neon-pink); font-size:12px; height:15px; margin-bottom:0; font-weight:bold; margin-top: 10px;"></p>
-    </div> <div style="margin-top: 25px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-family: 'Share Tech Mono', monospace; font-size: 13px;">
+    </div> 
+    
+    <div style="margin-top: 25px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; font-family: 'Share Tech Mono', monospace; font-size: 13px;">
         <a href="about.html" style="color: var(--neon-cyan); text-decoration: none; text-shadow: 0 0 5px var(--neon-cyan);">About/How to Play</a>
         <a href="privacy.html" style="color: var(--neon-cyan); text-decoration: none; text-shadow: 0 0 5px var(--neon-cyan);">Privacy Policy</a>
         <a href="terms.html" style="color: var(--neon-cyan); text-decoration: none; text-shadow: 0 0 5px var(--neon-cyan);">Terms of Service</a>
     </div>
 
 </div> 
-
-
 
 <div id="id-modal" class="overlay" style="justify-content:center; padding: 20px; z-index: 150; background: rgba(5, 5, 16, 0.99);">
     <h2 style="color: var(--neon-green); font-family: 'Orbitron'; font-size:24px; text-align:center; text-shadow: 0 0 10px var(--neon-green);">ID GENERATED</h2>
@@ -327,15 +332,10 @@
     </div>
 </div>
 
-        <div style="position: absolute; bottom: 10px; width: 100%; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: 12px; z-index: 50;">
-    <a href="about.html" style="color: var(--neon-cyan); text-decoration: none; margin: 0 10px; text-shadow: 0 0 5px var(--neon-cyan);">About / How to Play</a>
-    <a href="privacy.html" style="color: var(--neon-cyan); text-decoration: none; margin: 0 10px; text-shadow: 0 0 5px var(--neon-cyan);">Privacy Policy</a>
-    <a href="terms.html" style="color: var(--neon-cyan); text-decoration: none; margin: 0 10px; text-shadow: 0 0 5px var(--neon-cyan);">Terms of Service</a>
-</div>
-
-
 <script>
     let currentHackerId = "";
+    let isFB = false; // --- HYBRID ENVIRONMENT FLAG ---
+    
     let sys = { 
         level: 1, score: 0, topScore: 0, target: 0, time: 30, timerInterval: null, 
         active: false, empAvailable: true, startTime: 0,
@@ -363,7 +363,29 @@
     }
 
     window.addEventListener('load', async () => {
-        const savedId = localStorage.getItem('cm_hacker_id');
+        let savedId = null;
+
+        // 1. Check if we are inside Facebook
+        try {
+            if (typeof FBInstant !== 'undefined') {
+                await FBInstant.initializeAsync();
+                isFB = true; // Meta environment confirmed!
+                FBInstant.setLoadingProgress(50);
+                
+                const playerData = await FBInstant.player.getDataAsync(['cm_hacker_id']);
+                savedId = playerData['cm_hacker_id'];
+            }
+        } catch (e) {
+            console.log("Standard Web Environment Detected. Defaulting to local storage.");
+            isFB = false;
+        }
+
+        // 2. If NOT on Facebook, fall back to the browser's local memory
+        if (!isFB) {
+            savedId = localStorage.getItem('cm_hacker_id');
+        }
+
+        // 3. Universal Load Logic (Works for both)
         if (savedId && savedId !== 'GUEST') {
             const inputEl = document.getElementById('hacker-id-input');
             if(inputEl) inputEl.value = savedId;
@@ -384,6 +406,14 @@
                 }
             }
         }
+
+        // 4. Tell Facebook we are done loading (ignored by standard web)
+        if (isFB) {
+            FBInstant.setLoadingProgress(100);
+            await FBInstant.startGameAsync();
+            const fbPlayerName = FBInstant.player.getName();
+            console.log("Facebook Player Detected: " + fbPlayerName);
+        }
     });
 
     window.startNewSession = async function() {
@@ -400,6 +430,8 @@
         if(msgBox) msgBox.innerText = "GENERATING ID...";
         await window.cloudSave();
         
+        // HYBRID SAVE
+        if (isFB) FBInstant.player.setDataAsync({ 'cm_hacker_id': currentHackerId });
         localStorage.setItem('cm_hacker_id', currentHackerId);
         
         const startScreen = document.getElementById('start-screen');
@@ -460,6 +492,8 @@
             sys.upgrades = { ...sys.upgrades, ...(data.upgrades || {}) };
             currentHackerId = input;
             
+            // HYBRID SAVE
+            if (isFB) FBInstant.player.setDataAsync({ 'cm_hacker_id': currentHackerId });
             localStorage.setItem('cm_hacker_id', currentHackerId);
             
             startGameUI();
@@ -485,8 +519,15 @@
     };
 
     window.logoutSession = function() {
-        localStorage.removeItem('cm_hacker_id');
-        location.reload(); 
+        if (isFB) {
+            FBInstant.player.setDataAsync({ 'cm_hacker_id': null }).then(() => {
+                localStorage.removeItem('cm_hacker_id');
+                location.reload(); 
+            });
+        } else {
+            localStorage.removeItem('cm_hacker_id');
+            location.reload(); 
+        }
     };
 
     function startGameUI() {
@@ -862,23 +903,44 @@
         if(adOverlay) adOverlay.style.display = 'flex';
     }
 
-    window.triggerAdNetwork = function() {
+    const adPlacementId = 'YOUR_PLACEMENT_ID_HERE'; 
+
+    window.triggerAdNetwork = async function() {
         const watchAdBtn = document.getElementById('watch-ad-btn');
         if(watchAdBtn) watchAdBtn.style.display = 'none'; 
         
         const adAbortBtn = document.getElementById('ad-abort-btn');
         if(adAbortBtn) adAbortBtn.style.display = 'none';
-        
-        const progressCont = document.getElementById('ad-progress-container');
-        if(progressCont) progressCont.style.display = 'block'; 
-        
-        playSound('emp'); 
-        let progress = 0; const progBar = document.getElementById('ad-progress-fill');
-        const adTimer = setInterval(() => { 
-            progress += 5; 
-            if(progBar) progBar.style.width = progress + '%'; 
-            if(progress >= 100) { clearInterval(adTimer); grantAdReward(); } 
-        }, 150); 
+
+        if (isFB) {
+            // META REWARDED VIDEO ADS
+            const sysMsg = document.getElementById('system-msg');
+            if(sysMsg) { sysMsg.innerText = "ESTABLISHING SECURE FEED..."; sysMsg.style.color = "var(--neon-cyan)"; }
+
+            try {
+                const rewardedVideo = await FBInstant.getRewardedVideoAsync(adPlacementId);
+                await rewardedVideo.loadAsync();
+                await rewardedVideo.showAsync();
+                grantAdReward();
+            } catch (err) {
+                console.error('Ad failed:', err);
+                if(sysMsg) { sysMsg.innerText = "FEED FAILED. TRY AGAIN."; sysMsg.style.color = "var(--neon-pink)"; }
+                if(watchAdBtn) watchAdBtn.style.display = 'block'; 
+                if(adAbortBtn) adAbortBtn.style.display = 'inline-block';
+            }
+        } else {
+            // STANDARD WEB FALLBACK (Fake Loading Bar)
+            const progressCont = document.getElementById('ad-progress-container');
+            if(progressCont) progressCont.style.display = 'block'; 
+            
+            playSound('emp'); 
+            let progress = 0; const progBar = document.getElementById('ad-progress-fill');
+            const adTimer = setInterval(() => { 
+                progress += 5; 
+                if(progBar) progBar.style.width = progress + '%'; 
+                if(progress >= 100) { clearInterval(adTimer); grantAdReward(); } 
+            }, 150); 
+        }
     };
 
     function grantAdReward() {
