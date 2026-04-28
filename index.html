@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cyber-Math Overdrive (Full-Stack Edition)</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
-    <script src="https://connect.facebook.net/en_US/fbinstant.7.1.js"></script>
-
     <script>
     (adsbygoogle = window.adsbygoogle || []).push({
      params: { tag_for_child_directed_treatment: 1 }
@@ -367,14 +362,7 @@
         else if (type === 'buy') { osc.type = 'sine'; osc.frequency.setValueAtTime(1200, now); osc.frequency.setValueAtTime(1600, now+0.1); gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); }
     }
 
-        window.addEventListener('load', async () => {
-        // 1. Initialize Facebook Instant Games
-        await FBInstant.initializeAsync();
-        
-        // 2. Report halfway loaded
-        FBInstant.setLoadingProgress(50);
-
-        // 3. Load your local save data (Original Code)
+    window.addEventListener('load', async () => {
         const savedId = localStorage.getItem('cm_hacker_id');
         if (savedId && savedId !== 'GUEST') {
             const inputEl = document.getElementById('hacker-id-input');
@@ -396,18 +384,7 @@
                 }
             }
         }
-
-        // 4. Report fully loaded to Facebook
-        FBInstant.setLoadingProgress(100);
-
-        // 5. Tell Facebook to drop the loading screen and show the game
-        await FBInstant.startGameAsync();
-        
-        // Optional: Grab the player's Facebook name to welcome them!
-        const fbPlayerName = FBInstant.player.getName();
-        console.log("Facebook Player Detected: " + fbPlayerName);
     });
-
 
     window.startNewSession = async function() {
         const msgBox = document.getElementById('auth-msg');
